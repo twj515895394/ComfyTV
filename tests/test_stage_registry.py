@@ -68,6 +68,7 @@ EXPECTED_NODE_IDS = [
     'ComfyTV.GodRaysStage',
     'ComfyTV.GrayWorldStage',
     'ComfyTV.GridSplitStage',
+    'ComfyTV.H3VideoStage',
     'ComfyTV.HistogramEqStage',
     'ComfyTV.HueCorrectStage',
     'ComfyTV.ImageEditStage',

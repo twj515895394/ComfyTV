@@ -57,7 +57,7 @@ from .fakes import (
 )
 from .workflow_lists import labels_for, default_for
 from .constants import (
-    RESOLUTIONS, ASPECT_RATIOS,
+    RESOLUTIONS, ASPECT_RATIOS, H3_MEGAPIXELS,
     VIDEO_DURATION_MIN_S, VIDEO_DURATION_MAX_S, VIDEO_DURATION_DEFAULT_S,
     SPEECH_LANGUAGES, ACE_TIME_SIGNATURES, ACE_LANGUAGES, ACE_KEYSCALES,
 )
@@ -94,7 +94,7 @@ __all__ = [
     "_fake_image_variations", "_fake_panorama_views",
     "_PANORAMA_VIEW_LABELS_4",
     "labels_for", "default_for",
-    "RESOLUTIONS", "ASPECT_RATIOS",
+    "RESOLUTIONS", "ASPECT_RATIOS", "H3_MEGAPIXELS",
     "VIDEO_DURATION_MIN_S", "VIDEO_DURATION_MAX_S", "VIDEO_DURATION_DEFAULT_S",
     "SPEECH_LANGUAGES", "ACE_TIME_SIGNATURES", "ACE_LANGUAGES", "ACE_KEYSCALES",
     "_multiangle_prompt", "_MULTIANGLE_AZIMUTHS",

@@ -46,7 +46,7 @@ class TestSchemaDefinitions:
         "ImageLoaderStage", "VideoLoaderStage",
         "ModelLoaderStage", "AssetModelLoaderStage",
         # Generators
-        "ProjectStage", "TextStage", "ImageStage", "VideoStage",
+        "ProjectStage", "TextStage", "ImageStage", "VideoStage", "H3VideoStage",
         "AudioStage", "SpeechStage", "ShotImagesStage", "StoryboardStage",
         "Model3DStage",
         # Edits

@@ -1819,6 +1819,46 @@
       }
     }
   },
+  "ComfyTV_H3VideoStage": {
+    "display_name": "MiniMax-H3 视频阶段",
+    "inputs": {
+      "aspect_ratio": {
+        "name": "宽高比"
+      },
+      "megapixels": {
+        "name": "兆像素 (MP)"
+      },
+      "multiple": {
+        "name": "对齐倍数"
+      },
+      "audio": {
+        "name": "音频"
+      },
+      "duration_s": {
+        "name": "时长 (秒)"
+      },
+      "generate_audio": {
+        "name": "生成音频"
+      },
+      "images": {
+        "name": "图像"
+      },
+      "texts": {
+        "name": "文本"
+      },
+      "videos": {
+        "name": "视频"
+      },
+      "workflow": {
+        "name": "工作流"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "视频"
+      }
+    }
+  },
   "ComfyTV_VideoSubtitleSelectEraseStage": {
     "display_name": "扣选去字幕",
     "inputs": {

@@ -163,6 +163,31 @@ class TestResolveWH:
         w, h = lc._resolve_wh({"base": 1, "snap": 1}, {"aspect_ratio": "1:1"})
         assert w >= 16 and h >= 16
 
+    def test_minimax_h3_megapixels_table_all_resolutions(self):
+        # MiniMax-H3 output sizes (16:9 aspect ratio, multiple=32)
+        expected_table = {
+            "0.2": (608, 352),
+            "0.3": (736, 416),
+            "0.4": (864, 480),
+            "0.5": (960, 544),
+            "0.6": (1056, 608),
+            "0.7": (1152, 640),
+            "0.8": (1216, 672),
+            "0.9": (1280, 736),
+            "0.98": (1344, 768),
+            "1.0": (1376, 768),
+            "1.2": (1504, 832),
+            "1.5": (1664, 928),
+            "1.8": (1824, 1024),
+            "2.0": (1920, 1088),
+        }
+        for mp_str, expected in expected_table.items():
+            got = lc._resolve_wh(
+                {"type": "video", "snap": 32},
+                {"megapixels": mp_str, "aspect_ratio": "16:9", "multiple": 32},
+            )
+            assert got == expected, f"Failed for megapixels={mp_str}: expected {expected}, got {got}"
+
 
 # ─── _resolve_length ─────────────────────────────────────────────────────────
 
@@ -328,6 +353,20 @@ class TestResolver:
         r = self._r(self._ctx(options={"seed": 7, "aspect_ratio": "1:1",
                                        "resolution": "1024", "duration_s": 4}))
         assert r.resolve("x.y", {"from": "option:seed", "cast": "int"}) == 7
+
+    def test_option_aspect_ratio_maps_to_comfyui_enum(self):
+        r = self._r(self._ctx(options={"aspect_ratio": "16:9"}))
+        assert r.resolve("x.ar", {"from": "option:aspect_ratio"}) == "16:9 (Widescreen)"
+
+        r916 = self._r(self._ctx(options={"aspect_ratio": "9:16"}))
+        assert r916.resolve("x.ar", {"from": "option:aspect_ratio"}) == "9:16 (Portrait Widescreen)"
+
+    def test_option_megapixels_and_multiple_coercion(self):
+        rmp = self._r(self._ctx(options={"megapixels": "1.0", "multiple": "32"}))
+        assert rmp.resolve("x.mp", {"from": "option:megapixels"}) == 1.0
+        assert isinstance(rmp.resolve("x.mp", {"from": "option:megapixels"}), float)
+        assert rmp.resolve("x.m", {"from": "option:multiple"}) == 32
+        assert isinstance(rmp.resolve("x.m", {"from": "option:multiple"}), int)
 
     def test_option_missing_falls_to_default(self):
         r = self._r(self._ctx())

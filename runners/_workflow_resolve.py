@@ -1,4 +1,5 @@
 import logging
+import math
 import random
 import re
 import urllib.parse
@@ -40,13 +41,60 @@ _SHORT_SIDE_BY_TIER = {
 }
 
 
+_H3_MEGAPIXEL_TABLE_16_9 = {
+    "0.2": (608, 352),
+    "0.3": (736, 416),
+    "0.4": (864, 480),
+    "0.5": (960, 544),
+    "0.6": (1056, 608),
+    "0.7": (1152, 640),
+    "0.8": (1216, 672),
+    "0.9": (1280, 736),
+    "0.98": (1344, 768),
+    "1.0": (1376, 768),
+    "1.2": (1504, 832),
+    "1.5": (1664, 928),
+    "1.8": (1824, 1024),
+    "2.0": (1920, 1088),
+}
+
+
 def _resolve_wh(sizing: dict, options: dict) -> tuple[int, int]:
-    snap = int(sizing.get("snap") or 8)
+    snap = int(options.get("multiple") or sizing.get("snap") or 8)
+    ar_str = str(options.get("aspect_ratio") or "1:1").strip()
+    ar = _aspect_ratio_value(ar_str)
+
+    mp_val = options.get("megapixels")
+    if mp_val is not None and str(mp_val).strip() != "":
+        mp_key = str(mp_val).strip()
+        if mp_key in _H3_MEGAPIXEL_TABLE_16_9 and snap == 32:
+            preset_w, preset_h = _H3_MEGAPIXEL_TABLE_16_9[mp_key]
+            if ar_str == "16:9":
+                return preset_w, preset_h
+            if ar_str == "9:16":
+                return preset_h, preset_w
+        try:
+            mp = float(mp_val)
+            target_area = mp * 1_000_000.0
+            if ar >= 1.0:
+                w_raw = math.sqrt(target_area * ar)
+                w = int(round(w_raw / snap)) * snap
+                h_raw = w / ar
+                h = int(round(h_raw / snap)) * snap
+            else:
+                h_raw = math.sqrt(target_area / ar)
+                h = int(round(h_raw / snap)) * snap
+                w_raw = h * ar
+                w = int(round(w_raw / snap)) * snap
+            floor = max(snap, 16)
+            return max(floor, w), max(floor, h)
+        except (ValueError, TypeError):
+            pass
+
     tiers = sizing.get("short_side_by_tier") or _SHORT_SIDE_BY_TIER
     short = int(tiers.get(options.get("resolution"))
                 or sizing.get("base")
                 or next(iter(tiers.values()), 512))
-    ar = _aspect_ratio_value(options.get("aspect_ratio") or "1:1")
     if ar >= 1.0:
         h = short
         w = int(round(short * ar))
@@ -55,6 +103,7 @@ def _resolve_wh(sizing: dict, options: dict) -> tuple[int, int]:
         h = int(round(short / ar))
     floor = max(snap, 16)
     return max(floor, (w // snap) * snap), max(floor, (h // snap) * snap)
+
 
 
 def _resolve_length(sizing: dict, options: dict) -> int:
@@ -135,6 +184,18 @@ def _resolve_default(default: Any) -> Any:
     return default
 
 
+_ASPECT_RATIO_MAP = {
+    "16:9": "16:9 (Widescreen)",
+    "9:16": "9:16 (Portrait Widescreen)",
+    "1:1": "1:1 (Square)",
+    "4:3": "4:3 (Standard)",
+    "3:4": "3:4 (Portrait Standard)",
+    "3:2": "3:2 (Photo)",
+    "2:3": "2:3 (Portrait Photo)",
+    "21:9": "21:9 (Ultrawide)",
+}
+
+
 class _Resolver:
     def __init__(self, config: dict, ctx: RunnerContext):
         self.ctx = ctx
@@ -174,6 +235,18 @@ class _Resolver:
         elif src.startswith("option:"):
             key = src.split(":", 1)[1]
             v = self.ctx.options.get(key)
+            if key == "aspect_ratio" and isinstance(v, str) and v in _ASPECT_RATIO_MAP:
+                v = _ASPECT_RATIO_MAP[v]
+            elif key == "megapixels" and v not in (None, ""):
+                try:
+                    v = float(v)
+                except (ValueError, TypeError):
+                    pass
+            elif key == "multiple" and v not in (None, ""):
+                try:
+                    v = int(v)
+                except (ValueError, TypeError):
+                    pass
             value = v if v not in (None, "") else None
         elif src == "computed:width":
             value = self._wh_cached()[0]

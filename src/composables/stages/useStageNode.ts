@@ -315,7 +315,7 @@ export function useStageNode(
     }
 
     if (
-      node.comfyClass === 'ComfyTV.VideoStage'
+      (node.comfyClass === 'ComfyTV.VideoStage' || node.comfyClass === 'ComfyTV.H3VideoStage')
       && !outputHasLinks(node, 0)
     ) {
       spawnConsumingNode(node, 'ComfyTV.VideoPickerStage', 'batch')

@@ -259,6 +259,77 @@ class VideoStage(io.ComfyNode):
         )
 
 
+class H3VideoStage(io.ComfyNode):
+
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="ComfyTV.H3VideoStage",
+            display_name="H3 Video Stage",
+            category="ComfyTV/Generate",
+            inputs=[
+                *_standard_stage_inputs(),
+                io.Combo.Input("workflow", options=labels_for('video') or [""],
+                               default=default_for('video'),
+                               tooltip="Which backend video workflow to invoke when Run is clicked."),
+                io.Combo.Input("aspect_ratio", options=ASPECT_RATIOS, default="16:9",
+                               tooltip="Target output aspect ratio (e.g. 16:9, 9:16, 1:1, etc.)."),
+                io.Combo.Input("megapixels", options=H3_MEGAPIXELS, default="1.0",
+                               tooltip="Target megapixels for MiniMax-H3 resolution calculation."),
+                io.Int.Input("multiple", default=32, min=8, max=128, step=8,
+                             tooltip="Pixel alignment multiple required by MiniMax-H3 (default 32)."),
+                io.Int.Input("duration_s", default=VIDEO_DURATION_DEFAULT_S,
+                             min=VIDEO_DURATION_MIN_S, max=VIDEO_DURATION_MAX_S, step=1,
+                             display_mode=io.NumberDisplay.slider,
+                             tooltip="Target clip duration in seconds. The wrapped workflow picks fps and frame count."),
+                io.Boolean.Input("generate_audio", default=True,
+                                 tooltip="Whether the wrapped workflow should generate an audio track alongside video."),
+                _main_prompt_input(tooltip="Primary prompt — the user's intent for this stage. Upstream text inputs are treated as additional context."),
+                io.Autogrow.Input("texts",  template=_text_template(6)),
+                io.Autogrow.Input("images", template=_image_template(9)),
+                io.Autogrow.Input("videos", template=_video_template(4)),
+                io.Autogrow.Input("audio",  template=_audio_template(3)),
+                _custom_params_input(),
+            ],
+            outputs=[COMFYTV_VIDEO.Output("video")],
+            is_output_node=True,
+            hidden=[io.Hidden.unique_id],
+        )
+
+    @classmethod
+    async def execute(cls, force_run_token=0, project_id="", parent_output_id=0, workflow="",
+                      aspect_ratio="16:9", megapixels="1.0", multiple=32,
+                      duration_s=VIDEO_DURATION_DEFAULT_S, generate_audio=True,
+                      main_prompt="", texts=None, images=None, videos=None, audio=None,
+                      custom_params="{}"):
+
+        text_vals = _autogrow_values(texts)
+        combined_prompt = _combine_prompt(main_prompt, text_vals)
+        return await run_stage_workflow(
+            cls,
+            custom_params=custom_params,
+            kind='video',
+            label=workflow,
+            project_id=project_id,
+            parent_output_id=parent_output_id,
+            main_prompt=combined_prompt,
+            upstream={
+                'texts':  text_vals,
+                'images': _autogrow_values(images),
+                'videos': _autogrow_values(videos),
+                'audio':  _autogrow_values(audio) if not isinstance(audio, str)
+                          else audio,
+            },
+            options={
+                'aspect_ratio':   aspect_ratio,
+                'megapixels':     megapixels,
+                'multiple':       int(multiple or 32),
+                'duration_s':     duration_s,
+                'generate_audio': generate_audio,
+            },
+        )
+
+
 class AudioStage(io.ComfyNode):
 
     @classmethod
