@@ -234,7 +234,9 @@
       "voice": "Voice",
       "speed": "Speed",
       "referenceText": "Reference transcript",
-      "variantCount": "Variant count"
+      "variantCount": "Variant count",
+      "megapixels": "Megapixels",
+      "multiple": "Pixel multiple"
     },
     "toolbar": {
       "hd": "HD",

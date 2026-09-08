@@ -234,7 +234,9 @@
       "voice": "音色",
       "speed": "语速",
       "referenceText": "参考文本",
-      "variantCount": "变体数量"
+      "variantCount": "变体数量",
+      "megapixels": "兆像素",
+      "multiple": "像素对齐"
     },
     "toolbar": {
       "hd": "高清",

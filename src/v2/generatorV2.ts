@@ -224,6 +224,17 @@ const GENERATORS: Record<string, GeneratorConfig> = {
       { name: 'generate_audio', control: 'toggle', labelKey: 'v2.ctl.generateAudio' },
     ],
   },
+  'ComfyTV.H3VideoStage':          {
+    preview: 'video', linkKind: 'video', refTypes: ['image', 'video', 'audio'],
+    footerExtra: [
+      { name: 'megapixels' },
+      { name: 'multiple', type: 'number', titleKey: 'v2.ctl.multiple' },
+    ],
+    controls: [
+      { name: 'duration_s', control: 'slider', labelKey: 'v2.ctl.duration' },
+      { name: 'generate_audio', control: 'toggle', labelKey: 'v2.ctl.generateAudio' },
+    ],
+  },
   'ComfyTV.VideoUpscaleStage':     {
     preview: 'video', linkKind: 'upscale',
     footerExtra: [{ name: 'scale' }],
