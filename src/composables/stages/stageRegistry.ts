@@ -31,6 +31,8 @@ import DirectorStageCard from '@/components/stages/DirectorStageCard.vue'
 import OutpaintStageCard from '@/components/stages/OutpaintStageCard.vue'
 import StoryboardStageCard from '@/components/stages/StoryboardStageCard.vue'
 import Scene3DStageCard from '@/components/stages/Scene3DStageCard.vue'
+import BlenderSceneStageCard from '@/components/stages/BlenderSceneStageCard.vue'
+import BlenderCameraStageCard from '@/components/stages/BlenderCameraStageCard.vue'
 import LayerEditorStageCard from '@/components/stages/LayerEditorStageCard.vue'
 import PosterStageCard from '@/components/stages/PosterStageCard.vue'
 import StoryboardEditorStageCard from '@/components/stages/StoryboardEditorStageCard.vue'
@@ -65,6 +67,8 @@ import AudioAnalyzeStageCard from '@/components/stages/AudioAnalyzeStageCard.vue
 import AudioVisualizeStageCard from '@/components/stages/AudioVisualizeStageCard.vue'
 import AudioMixStageCard from '@/components/stages/AudioMixStageCard.vue'
 import AudioSegmentExportStageCard from '@/components/stages/AudioSegmentExportStageCard.vue'
+import AudioClipStageCard from '@/components/stages/AudioClipStageCard.vue'
+import AudioSplitStageCard from '@/components/stages/AudioSplitStageCard.vue'
 import AudioConvolveStageCard from '@/components/stages/AudioConvolveStageCard.vue'
 import AudioSweepStageCard from '@/components/stages/AudioSweepStageCard.vue'
 import AudioDeconvolveStageCard from '@/components/stages/AudioDeconvolveStageCard.vue'
@@ -209,6 +213,7 @@ export const RICH_STAGE_CARDS: Record<string, any> = {
   'ComfyTV.AssetImageLoaderStage':    AssetLoaderCard,
   'ComfyTV.AssetVideoLoaderStage':    AssetLoaderCard,
   'ComfyTV.AssetAudioLoaderStage':    AssetLoaderCard,
+  'ComfyTV.AssetTextLoaderStage':     AssetLoaderCard,
   'ComfyTV.AssetModelLoaderStage':    AssetLoaderCard,
   'ComfyTV.ModelLoaderStage':         ModelLoaderCard,
   'ComfyTV.MeshOpStage':              MeshOpStageCard,
@@ -222,6 +227,9 @@ export const RICH_STAGE_CARDS: Record<string, any> = {
   'ComfyTV.OutpaintStage':            OutpaintStageCard,
   'ComfyTV.StoryboardStage':          StoryboardStageCard,
   'ComfyTV.Scene3DStage':             Scene3DStageCard,
+  'ComfyTV.BlenderSceneStage':        BlenderSceneStageCard,
+  'ComfyTV.BlenderCameraStage':       BlenderCameraStageCard,
+  'ComfyTV.BlenderAnimationStage':    BlenderCameraStageCard,
   'ComfyTV.LayerEditorStage':         LayerEditorStageCard,
   'ComfyTV.PosterStage':              PosterStageCard,
   'ComfyTV.StoryboardEditorStage':    StoryboardEditorStageCard,
@@ -256,6 +264,8 @@ export const RICH_STAGE_CARDS: Record<string, any> = {
   'ComfyTV.AudioVisualizeStage':      AudioVisualizeStageCard,
   'ComfyTV.AudioMixStage':            AudioMixStageCard,
   'ComfyTV.AudioSegmentExportStage':  AudioSegmentExportStageCard,
+  'ComfyTV.AudioClipStage':           AudioClipStageCard,
+  'ComfyTV.AudioSplitStage':          AudioSplitStageCard,
   'ComfyTV.AudioConvolveStage':       AudioConvolveStageCard,
   'ComfyTV.AudioSweepStage':          AudioSweepStageCard,
   'ComfyTV.AudioDeconvolveStage':     AudioDeconvolveStageCard,
@@ -298,6 +308,7 @@ export const RICH_STAGE_CARDS: Record<string, any> = {
 }
 
 export const FLEX_FILL_STAGES = new Set([
+  'ComfyTV.LayerEditorStage',
   'ComfyTV.ScoreEditorStage',
   'ComfyTV.MidiEditorStage',
   'ComfyTV.ScoreStage',
@@ -319,6 +330,8 @@ export const FLEX_FILL_STAGES = new Set([
   'ComfyTV.SplitPartStage',
   'ComfyTV.VideoClipStage',
   'ComfyTV.VideoSplitStage',
+  'ComfyTV.AudioClipStage',
+  'ComfyTV.AudioSplitStage',
 ])
 
 export const RICH_STAGE_MIN_HEIGHTS: Record<string, number> = {
@@ -329,6 +342,8 @@ export const RICH_STAGE_MIN_HEIGHTS: Record<string, number> = {
   'ComfyTV.EraseStage':      640,
   'ComfyTV.CropStage':       620,
   'ComfyTV.VideoClipStage':  680,
+  'ComfyTV.AudioClipStage':  420,
+  'ComfyTV.AudioSplitStage': 420,
   'ComfyTV.VideoCropStage':  700,
   'ComfyTV.VideoConcatStage': 560,
   'ComfyTV.VideoSpeedStage':  620,
@@ -348,6 +363,7 @@ export const RICH_STAGE_MIN_HEIGHTS: Record<string, number> = {
   'ComfyTV.AssetImageLoaderStage':    660,
   'ComfyTV.AssetVideoLoaderStage':    630,
   'ComfyTV.AssetAudioLoaderStage':    480,
+  'ComfyTV.AssetTextLoaderStage':     560,
   'ComfyTV.AssetModelLoaderStage':    620,
   'ComfyTV.Model3DStage':             560,
   'ComfyTV.ModelLoaderStage':         760,
@@ -359,6 +375,7 @@ export const RICH_STAGE_MIN_HEIGHTS: Record<string, number> = {
   'ComfyTV.GridSplitStage':           560,
   'ComfyTV.OutpaintStage':            620,
   'ComfyTV.Scene3DStage':             640,
+  'ComfyTV.BlenderSceneStage':        720,
   'ComfyTV.LayerEditorStage':         680,
   'ComfyTV.StoryboardEditorStage':    780,
   'ComfyTV.MaterialStage':            600,
@@ -475,6 +492,7 @@ export const RICH_STAGE_MIN_HEIGHTS: Record<string, number> = {
 export const RICH_STAGE_MIN_WIDTHS: Record<string, number> = {
   'ComfyTV.PosterStage': 640,
   'ComfyTV.Scene3DStage': 960,
+  'ComfyTV.BlenderSceneStage': 960,
   'ComfyTV.LayerEditorStage': 960,
   'ComfyTV.StoryboardEditorStage': 1080,
 }

@@ -55,6 +55,7 @@
                   "index",
                   "guides/getting-started",
                   "guides/sidebar",
+                  "guides/eagle",
                   "guides/generate",
                   "guides/image-tools",
                   "guides/panorama",
@@ -64,7 +65,10 @@
                   "guides/models",
                   "guides/bridges",
                   "guides/custom-workflows",
-                  "guides/sidebar-config-editor"
+                  "guides/sidebar-config-editor",
+                  "guides/mcp",
+                  "guides/bot",
+                  "guides/skills"
                 ]
               }
             ]
@@ -76,6 +80,7 @@
                 "group": "Project & Timeline",
                 "pages": [
                   "node-reference/project",
+                  "node-reference/director",
                   "node-reference/director-timeline",
                   "node-reference/timeline-video",
                   "node-reference/sequence"
@@ -319,6 +324,8 @@
               {
                 "group": "Audio · Edit & Mix",
                 "pages": [
+                  "node-reference/audio-clip",
+                  "node-reference/audio-split",
                   "node-reference/audio-extract-vocal",
                   "node-reference/audio-extract-bg",
                   "node-reference/audio-crossfade",
@@ -403,6 +410,7 @@
                   "zh/index",
                   "zh/guides/getting-started",
                   "zh/guides/sidebar",
+                  "zh/guides/eagle",
                   "zh/guides/generate",
                   "zh/guides/image-tools",
                   "zh/guides/panorama",
@@ -412,7 +420,10 @@
                   "zh/guides/models",
                   "zh/guides/bridges",
                   "zh/guides/custom-workflows",
-                  "zh/guides/sidebar-config-editor"
+                  "zh/guides/sidebar-config-editor",
+                  "zh/guides/mcp",
+                  "zh/guides/bot",
+                  "zh/guides/skills"
                 ]
               }
             ]
@@ -424,6 +435,7 @@
                 "group": "Project & Timeline",
                 "pages": [
                   "zh/node-reference/project",
+                  "zh/node-reference/director",
                   "zh/node-reference/director-timeline",
                   "zh/node-reference/timeline-video",
                   "zh/node-reference/sequence"
@@ -667,6 +679,8 @@
               {
                 "group": "Audio · Edit & Mix",
                 "pages": [
+                  "zh/node-reference/audio-clip",
+                  "zh/node-reference/audio-split",
                   "zh/node-reference/audio-extract-vocal",
                   "zh/node-reference/audio-extract-bg",
                   "zh/node-reference/audio-crossfade",

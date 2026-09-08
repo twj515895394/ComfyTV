@@ -42,6 +42,8 @@ def list_settings() -> list[dict[str, Any]]:
             "type": spec["type"],
             "value": effective[key],
             "default": spec["default"],
+            "experimental": bool(spec.get("experimental")),
+            **({"options": list(spec["options"])} if spec.get("options") else {}),
         }
         for key, spec in settings.SETTINGS_SPEC.items()
     ]

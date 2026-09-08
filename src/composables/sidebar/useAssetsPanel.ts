@@ -3,7 +3,9 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { adoptAssets } from '@/api'
+import { sendToEagle } from '@/api/eagle'
 import type { Asset } from '@/api/schemas'
+import { app } from '@/lib/comfyApp'
 import { requestProxyBuild } from '@/composables/widgets/useProxiedVideoUrl'
 import { type LightboxItem, openLightbox } from '@/composables/useLightbox'
 import { ASSET_DRAG_MIME } from '@/composables/sidebar/assetCanvasDrop'
@@ -13,24 +15,18 @@ import { askConfirm } from '@/composables/dialog/useConfirmDialog'
 import { askText } from '@/composables/dialog/useTextInputDialog'
 import { type AssetCategoryFilter, useAssetStore } from '@/stores/assetStore'
 import { type AssetMediaType, mediaTypeOf } from '@/utils/mediaFileTypes'
+import { formatBytes } from '@/utils/mediaFormat'
 
 export type AssetMediaFilter = 'all' | AssetMediaType
 export type AssetViewMode = 'grid' | 'list'
 
-export const ASSET_MEDIA_FILTERS: AssetMediaFilter[] = ['all', 'image', 'video', 'audio', 'model']
+export const ASSET_MEDIA_FILTERS: AssetMediaFilter[] = ['all', 'image', 'video', 'audio', 'model', 'text']
 
 export { MODEL_FILE_EXTENSIONS } from '@/widgets/three/modelFormats'
 
 const ASSET_MENU_WIDTH = 192
 const TAG_EDITOR_WIDTH = 176
 const SETTINGS_MENU_WIDTH = 176
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`
-  return `${(bytes / 1024 ** 3).toFixed(1)} GB`
-}
 
 export function useAssetsPanel(isActive: () => boolean | undefined) {
   const { t } = useI18n()
@@ -104,7 +100,7 @@ export function useAssetsPanel(isActive: () => boolean | undefined) {
   function assetMeta(asset: Asset): string {
     if (asset.media_type === 'image' && asset.width && asset.height)
       return `${asset.width}×${asset.height}`
-    if (asset.size_bytes) return formatSize(asset.size_bytes)
+    if (asset.size_bytes) return formatBytes(asset.size_bytes)
     return ''
   }
 
@@ -198,6 +194,27 @@ export function useAssetsPanel(isActive: () => boolean | undefined) {
     const a = menuAsset.value
     closeAssetMenu()
     if (a?.media_type === 'video') void requestProxyBuild(a.payload_url)
+  }
+
+  function toast(severity: string, summary: string, detail = '') {
+    ;(app as any)?.extensionManager?.toast?.add?.({ severity, summary, detail, life: 5000 })
+  }
+
+  async function onSendToEagle(asset: Asset) {
+    try {
+      const res = await sendToEagle({ payload_url: asset.payload_url, name: asset.name })
+      toast('success', res.sent
+        ? t('eagle.send.sent', { name: asset.name })
+        : t('eagle.send.queued', { n: res.pending_count }))
+    } catch (e) {
+      toast('error', t('eagle.send.failed'), String(e))
+    }
+  }
+
+  function menuSendToEagle() {
+    const a = menuAsset.value
+    closeAssetMenu()
+    if (a) void onSendToEagle(a)
   }
 
   function viewFullAsset(asset: Asset) {
@@ -356,10 +373,13 @@ export function useAssetsPanel(isActive: () => boolean | undefined) {
     void scanMediaFolder()
   }
 
+  let scannedOnce = false
   watch(isActive, (active) => {
-    if (active) {
-      store.ensureHydrated()
-      store.installWebSocketSync()
+    if (!active) return
+    store.ensureHydrated()
+    store.installWebSocketSync()
+    if (!scannedOnce) {
+      scannedOnce = true
       void scanMediaFolder()
     }
   }, { immediate: true })
@@ -402,6 +422,7 @@ export function useAssetsPanel(isActive: () => boolean | undefined) {
     closeAssetMenu,
     menuLoadNode,
     menuMakeProxy,
+    menuSendToEagle,
     menuEditTags,
     menuRenameAsset,
     menuDeleteAsset,

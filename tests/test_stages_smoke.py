@@ -44,7 +44,7 @@ class TestSchemaDefinitions:
     @pytest.mark.parametrize("cls_name", [
         # Loaders
         "ImageLoaderStage", "VideoLoaderStage",
-        "ModelLoaderStage", "AssetModelLoaderStage",
+        "ModelLoaderStage", "AssetModelLoaderStage", "AssetTextLoaderStage",
         # Generators
         "ProjectStage", "TextStage", "ImageStage", "VideoStage", "H3VideoStage",
         "AudioStage", "SpeechStage", "ShotImagesStage", "StoryboardStage",
@@ -140,10 +140,41 @@ class TestLoaderExecute:
         assert _extract_material_json("") is None
 
     def test_asset_model_loader_execute(self, reset_db):
+        import os
+        import folder_paths
         from ComfyTV.nodes.stages.loaders import AssetModelLoaderStage
+        out_dir = folder_paths.get_output_directory()
+        os.makedirs(out_dir, exist_ok=True)
+        with open(os.path.join(out_dir, "m.glb"), "wb") as fh:
+            fh.write(b"x")
         out = AssetModelLoaderStage.execute(project_id="default",
                                             asset_url="/view?filename=m.glb")
         assert out.values[0] == "/view?filename=m.glb"
+
+    def test_asset_text_loader_reads_file_content(self, reset_db):
+        import os
+        import folder_paths
+        from ComfyTV.nodes.stages.loaders import AssetTextLoaderStage
+        out_dir = folder_paths.get_output_directory()
+        os.makedirs(out_dir, exist_ok=True)
+        with open(os.path.join(out_dir, "t.txt"), "w", encoding="utf-8") as fh:
+            fh.write("hello asset")
+        out = AssetTextLoaderStage.execute(project_id="default",
+                                           asset_url="/view?filename=t.txt")
+        assert out.values[0] == "hello asset"
+
+    def test_asset_loader_missing_file_raises(self, reset_db):
+        from ComfyTV.nodes.stages.loaders import AssetImageLoaderStage
+        with pytest.raises(RuntimeError, match="missing"):
+            AssetImageLoaderStage.execute(
+                project_id="default",
+                asset_url="/view?filename=fm-nope.png&type=input")
+
+    def test_asset_loader_non_view_url_passthrough(self, reset_db):
+        from ComfyTV.nodes.stages.loaders import AssetImageLoaderStage
+        out = AssetImageLoaderStage.execute(
+            project_id="default", asset_url="https://example.com/x.png")
+        assert out.values[0] == "https://example.com/x.png"
 
     def test_list_3d_input_files(self, monkeypatch, tmp_path):
         from ComfyTV.nodes.stages import loaders
@@ -178,6 +209,22 @@ class TestLoaderExecute:
         files = loaders._list_input_files(["image"])
         assert "a.png" in files
         assert "b.mp4" in files  # passthrough — real impl would filter
+
+    def test_list_input_files_includes_uploads_subfolder(self, monkeypatch, tmp_path):
+        from ComfyTV.nodes.stages import loaders
+        import folder_paths
+        (tmp_path / "root.png").write_text("x")
+        uploads = tmp_path / "comfytv" / "uploads"
+        uploads.mkdir(parents=True)
+        (uploads / "dropped.png").write_text("y")
+        nested = uploads / "deeper"
+        nested.mkdir()
+        (nested / "ignored.png").write_text("z")
+        monkeypatch.setattr(folder_paths, "get_input_directory", lambda: str(tmp_path))
+        monkeypatch.setattr(folder_paths, "filter_files_content_types",
+                            lambda files, kinds: files, raising=False)
+        files = loaders._list_input_files(["image"])
+        assert files == ["comfytv/uploads/dropped.png", "root.png"]
 
 
 # ─── Stage execute() smoke tests — runner-less stages ──────────────────────

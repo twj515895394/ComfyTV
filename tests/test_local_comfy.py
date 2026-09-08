@@ -9,6 +9,7 @@ import pytest
 
 from ComfyTV.runners import local_comfy as lc
 from ComfyTV.runners.base import RunnerContext
+from ComfyTV.runners._workflow_resolve import KEEP_ORIGINAL
 
 
 # ─── _cast ───────────────────────────────────────────────────────────────────
@@ -230,6 +231,24 @@ class TestViewUrlAnnotated:
         got = lc._view_url_to_annotated("/view?filename=x.png&subfolder=")
         assert got.endswith("[output]")
 
+    def test_filename_annotation_overrides_type_param(self):
+        got = lc._view_url_to_annotated(
+            "/view?filename=z-image-turbo_00087_.png+%5Boutput%5D&type=input"
+        )
+        assert got == "z-image-turbo_00087_.png [output]"
+
+    def test_filename_annotation_with_subfolder(self):
+        got = lc._view_url_to_annotated(
+            "/view?filename=a.png+%5Btemp%5D&subfolder=runs&type=input"
+        )
+        assert got == "runs/a.png [temp]"
+
+    def test_filename_annotation_not_doubled(self):
+        got = lc._view_url_to_annotated(
+            "/view?filename=b.png+%5Binput%5D&type=input"
+        )
+        assert got == "b.png [input]"
+
     def test_rejects_non_view_url(self):
         with pytest.raises(RuntimeError, match="must be a ComfyUI"):
             lc._view_url_to_annotated("http://example.com/x.png")
@@ -378,6 +397,22 @@ class TestResolver:
                                        "resolution": "1024", "duration_s": 4}))
         v = r.resolve("x.y", {"from": "option:lyrics", "default": "default text"})
         assert v == "default text"
+
+    def test_option_missing_numeric_cast_keeps_original(self):
+        r = self._r(self._ctx())
+        for cast in ("int", "float"):
+            v = r.resolve("x.y", {"from": "option:missing", "cast": cast})
+            assert v is KEEP_ORIGINAL
+
+    def test_option_missing_str_cast_writes_empty(self):
+        r = self._r(self._ctx())
+        assert r.resolve("x.y", {"from": "option:missing", "cast": "str"}) == ""
+        assert r.resolve("x.y", {"from": "option:missing"}) == ""
+
+    def test_cast_failure_carries_context(self):
+        r = self._r(self._ctx(options={"seed": "abc"}))
+        with pytest.raises(RuntimeError, match=r"x\.y: cannot cast 'abc' \(from option:seed\) to int"):
+            r.resolve("x.y", {"from": "option:seed", "cast": "int"})
 
     def test_computed_width_height(self):
         r = self._r(self._ctx())
@@ -1171,11 +1206,11 @@ class TestTranslateSubpromptEvent:
             'progress_state', {'nodes': {}, 'prompt_id': 'sub'}, 'sub', 71, self._agg)
         assert out == []
 
-    def test_progress_reattributed_to_outer_node(self):
+    def test_raw_progress_swallowed(self):
         out = lc._translate_subprompt_event(
             'progress', {'value': 2, 'max': 8, 'node': '3', 'prompt_id': 'sub'},
             'sub', 71, self._agg)
-        assert out == [('progress', {'value': 2, 'max': 8, 'node': '71', 'prompt_id': 'sub'})]
+        assert out == []
 
     def test_progress_text_reattributed(self):
         out = lc._translate_subprompt_event(

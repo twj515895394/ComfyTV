@@ -1,8 +1,254 @@
 {
+  "pentradoActions": {
+    "capture": "Capture",
+    "captureHint": "Composite the layers and send to the node output",
+    "saveToLibraryHint": "Export as PSD to the asset library"
+  },
   "dialog": {
     "confirm": "OK",
     "cancel": "Cancel",
     "close": "Close"
+  },
+  "v2": {
+    "meta": {
+      "fps": "{n} fps",
+      "silent": "no audio",
+      "mono": "mono",
+      "stereo": "stereo",
+      "channels": "{n} ch",
+      "frames": "{n} frames",
+      "genTime": "Generated in {t}"
+    },
+    "genopt": {
+      "resolution": "Resolution",
+      "ratio": "Aspect ratio",
+      "count": "Count"
+    },
+    "panelCollapse": "Collapse the panel — keeps a one-line summary and Run",
+    "panelExpand": "Expand the panel",
+    "imageStageTitle": "Image · ImageStage",
+    "pickerTitle": "Pick · Image Picker",
+    "cropTitle": "Crop · Edit",
+    "ed": {
+      "rotate": "Rotate · Edit",
+      "mirror": "Mirror · Edit",
+      "grade": "Color Grade · Edit",
+      "compare": "Compare · Edit",
+      "gridSplit": "Grid Split · Edit",
+      "compareHint": "Wire two images into A and B to compare",
+      "wired": "wired",
+      "empty": "empty"
+    },
+    "stageHint": "Connect references, press ↑ to generate",
+    "pickerHint": "Connect an upstream batch, click to pick",
+    "cropHint": "Connect an upstream image to start cropping",
+    "batchCount": "{n}",
+    "batchPos": "{i}/{n}",
+    "refsCount": "{n} refs",
+    "poolCount": "{n} in pool",
+    "clear": "Clear",
+    "linkWorkflow": "Link workflow",
+    "videoColorTitle": "Color · Video FX",
+    "videoCurvesTitle": "Curves · Video FX",
+    "fxChainTitle": "FX Chain · Render",
+    "renderChain": "Render chain",
+    "outputLabel": "Output",
+    "livePreview": "Live",
+    "fxChainHint": "Connect an upstream video to preview the chain",
+    "scene3dTitle": "3D Scene · Editor",
+    "relightTitle": "Relight · Light ball",
+    "applying": "Applying…",
+    "appliedLive": "Applied · live downstream",
+    "dragToApply": "Drag the box to apply",
+    "loaderHint": "Drop a file here, or click to upload",
+    "loaderEmpty": "Nothing loaded",
+    "assetLoaderHint": "Click to pick from the asset library",
+    "assetLoaderEmpty": "No asset selected",
+    "params": "Params",
+    "generatorHint": "Press ↑ to generate",
+    "change": "Change",
+    "upload": "Upload",
+    "renameHint": "Double-click to rename",
+    "removeItem": "Remove",
+    "moreActions": "More",
+    "fx": {
+      "lut": "LUT · Grade",
+      "selectiveColor": "Selective Color · Grade",
+      "cdl": "CDL · Grade",
+      "histogramEq": "Histogram EQ · Grade",
+      "awb": "Auto White Balance · Grade",
+      "pseudocolor": "Pseudocolor · Grade",
+      "hueCorrect": "Hue Correct · Grade",
+      "select0r": "Select0r · Grade",
+      "keyer": "Keyer · Key",
+      "pik": "PIK · Key",
+      "despill": "Despill · Key",
+      "colorSuppress": "Color Suppress · Key",
+      "matteMorph": "Matte Morph · Key",
+      "shapeMask": "Shape Mask · Key",
+      "lensDistort": "Lens Distort · Optics",
+      "chromaticAberration": "Chromatic Aberration · Optics",
+      "lensFlare": "Lens Flare · Optics",
+      "glow": "Glow · Optics",
+      "godRays": "God Rays · Optics",
+      "blurSharpen": "Blur & Sharpen · Restore",
+      "denoise": "Denoise · Restore",
+      "deinterlace": "Deinterlace · Restore",
+      "posterize": "Posterize · Look",
+      "oldFilm": "Old Film · Look",
+      "artFx": "Art FX · Look",
+      "glitch": "Glitch · Look",
+      "kaleidoscope": "Kaleidoscope · Look",
+      "waveWarp": "Wave Warp · Look",
+      "strobe": "Strobe · Look",
+      "feedback": "Feedback · Look",
+      "regrain": "Regrain · Look",
+      "stylize": "Quick Looks · Look",
+      "chromaShift": "Chroma Shift · Look",
+      "transform": "Transform · Geo",
+      "video360": "360 Video · Geo",
+      "card3d": "Card 3D · Geo",
+      "particles": "Particles · FX",
+      "water": "Water · FX",
+      "lightGraffiti": "Light Graffiti · FX",
+      "trim": "Trim · Cut",
+      "vcrop": "Crop · Cut",
+      "vsplit": "Split · Cut",
+      "concat": "Concat · Cut",
+      "speed": "Speed · Cut",
+      "rotate": "Rotate & Flip · Cut",
+      "volume": "Volume · Cut",
+      "muxAudio": "Mux Audio · Cut",
+      "resize": "Resize · Cut",
+      "frames": "Frames · Cut",
+      "timeRemap": "Time Remap · Cut",
+      "sequence": "Sequence · Cut",
+      "sceneDetect": "Scene Detect · Cut",
+      "chromaKey": "Chroma Key · Comp",
+      "composite": "Composite · Comp",
+      "cornerPin": "Corner Pin · Comp",
+      "rotoMask": "Roto Mask · Comp",
+      "keyMix": "Key Mix · Comp",
+      "matteMonitor": "Matte Monitor · Comp",
+      "maskPropagate": "Mask Propagate · Comp",
+      "paintStroke": "Paint Stroke · Comp",
+      "stmap": "STMap · Comp",
+      "stmapGen": "STMap Gen · Comp",
+      "zDefocus": "Z Defocus · Comp",
+      "frameBlend": "Frame Blend · Comp",
+      "transition": "Transition · Blend",
+      "lumaWipe": "Luma Wipe · Blend",
+      "stabilize": "Stabilize · Restore",
+      "stabilizePro": "Stabilize Pro · Restore",
+      "stabilize360": "360 Stabilize · Restore",
+      "interpolate": "Interpolate · Restore",
+      "faceBlur": "Face Blur · Restore",
+      "spotRemover": "Spot Remover · Restore",
+      "scopes": "Scopes · Monitor",
+      "contactSheet": "Contact Sheet · Monitor",
+      "audioMeter": "Audio Meter · Monitor",
+      "title": "Title · Text",
+      "subtitle": "Subtitle · Text",
+      "annotate": "Annotate · Text",
+      "kenBurns": "Ken Burns · FX",
+      "slitScan": "Slit Scan · FX"
+    },
+    "rich": {
+      "score": "Score · Music",
+      "scoreEditor": "Score Editor · Music",
+      "midiEditor": "MIDI Editor · Music",
+      "expression": "Expression · Anim",
+      "motionTrack": "Motion Track · Anim",
+      "pattern": "Pattern · Gen",
+      "panorama": "Panorama · 360",
+      "panoView": "Current View · 360",
+      "panoMulti": "Multi View · 360",
+      "storyboard": "Storyboard · Story",
+      "storyboardEditor": "Storyboard Studio · Story",
+      "layerEditor": "Layer Editor · Image",
+      "material": "Material · 3D",
+      "modelLoader": "Load Model · 3D",
+      "meshPrimitive": "Primitive · 3D",
+      "meshOp": "Mesh Ops · 3D",
+      "meshBake": "Bake Maps · 3D",
+      "meshBoolean": "Boolean · 3D",
+      "lineArt": "Line Art · Image",
+      "poster": "Poster · Image",
+      "splitPart": "Split Parts · Image",
+      "erase": "Erase · Paint",
+      "inpaint": "Inpaint · Paint",
+      "outpaint": "Outpaint · Paint",
+      "multiangle": "Multi-angle · Image",
+      "director": "Director · Cut"
+    },
+    "afx": {
+      "dynamics": "Compressor · Dyn",
+      "loudness": "Loudness · Dyn",
+      "duck": "Ducking · Dyn",
+      "eq": "EQ · Tone",
+      "saturate": "Saturate · Tone",
+      "modulation": "Modulation · Tone",
+      "echo": "Echo · Tone",
+      "stereo": "Stereo Field · Tone",
+      "timePitch": "Time & Pitch · Tone",
+      "denoise": "Denoise · Restore",
+      "noiseReduction": "Spectral Gate · Restore",
+      "repair": "Repair · Restore",
+      "convolve": "Convolve IR · Space",
+      "deconvolve": "Deconvolve · Space",
+      "museReverb": "Reverb · Space",
+      "mix": "Mixer · Mix",
+      "crossfade": "Crossfade · Mix",
+      "stemSplit": "Stem Split · Mix",
+      "demuxAudio": "Audio Track · Mix",
+      "demuxVideo": "Silent Video · Mix",
+      "clip": "Trim · Cut",
+      "split": "Split · Cut",
+      "analyze": "Analyze · Meter",
+      "mir": "Music Info · Meter",
+      "visualize": "Visualize · Meter",
+      "segmentExport": "Segments · Meter",
+      "reactive": "Reactive Keys · Meter",
+      "sweep": "Sweep · Synth",
+      "sf2": "SoundFont · Synth",
+      "clickTrack": "Click Track · Synth",
+      "chordAccomp": "Chords · Synth",
+      "scoreToMidi": "Score Player · Synth",
+      "demuxAudioHint": "Extract the audio track from the video",
+      "demuxVideoHint": "Strip the audio, keep the picture"
+    },
+    "customParams": {
+      "title": "Workflow params",
+      "add": "Add",
+      "addHint": "Attach a parameter exposed by the bound workflow",
+      "remove": "Remove parameter"
+    },
+    "ctl": {
+      "duration": "Duration (s)",
+      "generateAudio": "Generate audio",
+      "lyrics": "Lyrics",
+      "bpm": "BPM",
+      "timeSignature": "Time signature",
+      "keyScale": "Key",
+      "language": "Language",
+      "voice": "Voice",
+      "speed": "Speed",
+      "referenceText": "Reference transcript",
+      "variantCount": "Variant count"
+    },
+    "toolbar": {
+      "hd": "HD",
+      "expand": "Expand",
+      "angles": "Angles",
+      "relight": "Relight",
+      "redraw": "Redraw",
+      "erase": "Erase",
+      "cutout": "Cutout",
+      "grid": "Grid split",
+      "panorama": "Panorama",
+      "crop": "Crop",
+      "download": "Download"
+    }
   },
   "workflow": {
     "uploadButton": "⬆ Upload workflow",
@@ -17,6 +263,8 @@
     "running": "Running…",
     "cancel": "Cancel",
     "preparingWorkflow": "Preparing workflow…",
+    "noWorkflowShort": "No workflow installed — use Upload / Link",
+    "noWorkflowInstalled": "No {kind} workflow is installed — import one with the card's Upload / Link buttons, or under ComfyTV → Stages in the sidebar.",
     "outputDurationHint": "Generation time",
     "section": {
       "context": "Context",
@@ -29,7 +277,10 @@
       "clearHint": "Empty the picker pool and reset the selection",
       "confirmClear": "Clear pool?",
       "confirm": "Yes",
-      "cancel": "No"
+      "cancel": "No",
+      "modeAppend": "Mode: Append",
+      "modeReplace": "Mode: Replace",
+      "modeHint": "How new run results enter the pool (click to switch). Append: keep existing items and add new ones on top. Replace: keep only the latest batch. Identical images are kept once — the pool dedupes by image."
     },
     "empty": {
       "no_output": "no output yet",
@@ -58,6 +309,7 @@
       "viewFull": "View full size",
       "download": "Download",
       "copyText": "Copy text",
+      "saveTextAsset": "Save to asset library",
       "renderMarkdown": "Render as Markdown",
       "showRawText": "Show raw text",
       "addTag": "Save to library / tag",
@@ -75,17 +327,71 @@
     "cancelled": "Cancelled",
     "upstreamNotReady": "Upstream not ready",
     "upstreamNotReadyDetail": "Upstream not ready: {list}. Run those stage(s) first so they produce a snapshot, then Run this stage again.",
+    "droppedFromQueue": "Removed from the queue before it ran — the queue was cleared or the prompt was deleted.",
     "workerDied": "Backend stopped without sending a result. The prompt worker likely died (CUDA OOM during cleanup is the usual cause). Restart ComfyUI to recover."
+  },
+  "eagle": {
+    "title": "Eagle Library",
+    "refresh": "Refresh",
+    "search": "Search name or tags…",
+    "loading": "Loading…",
+    "empty": "No items",
+    "loadMore": "Load more",
+    "disabledHint": "Eagle integration is disabled. Turn on “Enable Eagle integration” in Settings and pin the ComfyTV .library path.",
+    "pendingBanner": "{n} item(s) queued for Eagle (waiting for the pinned library to open)",
+    "flushNow": "Send now",
+    "flushing": "Sending…",
+    "mode": {
+      "api": "Online",
+      "disk": "Read-only",
+      "offline": "Offline",
+      "disabled": "Disabled"
+    },
+    "hint": {
+      "disk": "Eagle is closed or has another library open: reading the library from disk (read-only). Sends are queued and flushed automatically once the pinned library opens.",
+      "offline": "Eagle unreachable: the app is not running and the pinned library path does not exist. Check the library path in Settings."
+    },
+    "folder": {
+      "all": "All folders"
+    },
+    "ai": {
+      "label": "AI",
+      "tooltip": "AI semantic search (needs Eagle's AI Search plugin): search by meaning, not by name"
+    },
+    "similar": {
+      "action": "Find similar",
+      "banner": "Items similar to “{name}”",
+      "clear": "Clear",
+      "failed": "Similar search failed"
+    },
+    "import": {
+      "action": "Import into Assets",
+      "done": "Imported “{name}”",
+      "existed": "“{name}” is already in Assets",
+      "failed": "Import failed"
+    },
+    "send": {
+      "action": "Send to Eagle",
+      "sent": "Sent to Eagle: {name}",
+      "queued": "Eagle not ready — queued ({n} pending)",
+      "failed": "Send failed"
+    },
+    "flush": {
+      "done": "Flushed {n} item(s) to Eagle",
+      "failed": "{n} item(s) failed to flush"
+    }
   },
   "sidebar": {
     "tab": {
       "workflow": "Workflow",
       "assets": "Assets",
+      "eagle": "Eagle",
       "entries": "Entries",
       "params": "Stages",
       "presets": "Presets",
       "resources": "Resources",
       "servers": "Servers",
+      "collab": "Collab",
       "settings": "Settings"
     }
   },
@@ -95,6 +401,19 @@
     "loading": "Loading…",
     "save": "Save",
     "saving": "Saving…",
+    "search": "Search settings…",
+    "noMatch": "No settings match",
+    "experimental": "Experimental",
+    "reset": "Reset to default",
+    "on": "On",
+    "off": "Off",
+    "status": { "checking": "Checking…", "online": "Connected", "offline": "Offline" },
+    "blender": {
+      "section": "Blender bridge"
+    },
+    "general": {
+      "section": "General"
+    },
     "backup": {
       "section": "Database backup",
       "now": "Back up now",
@@ -103,6 +422,20 @@
       "failed": "Backup failed: {error}"
     },
     "fields": {
+      "enable-v2": {
+        "label": "Enable ComfyTV V2 nodes",
+        "desc": "EXPERIMENTAL — expect rough edges. Renders migrated stages with the new content-first V2 shells. Requires ComfyUI's own Node 2.0 (Vue nodes) setting to be enabled first. Refresh the page after changing."
+      },
+      "v2-lod-scale": {
+        "label": "Poster mode below zoom",
+        "desc": "Below this canvas zoom, V2 cards collapse to a thumbnail with a play/open button; panels come back once you zoom in past it again.",
+        "options": { "30": "30%", "42": "42%", "50": "50%", "60": "60%" }
+      },
+      "v2-lod-fill": {
+        "label": "Poster backdrop",
+        "desc": "What fills the card around a letterboxed thumbnail: the checkerboard used by image previews, or a dimmed copy of the same picture stretched to fill.",
+        "options": { "checker": "Checkerboard", "image": "Same picture, dimmed" }
+      },
       "enable-db-backup": {
         "label": "Automatic backup on startup",
         "desc": "Back up the ComfyTV data directory (database + workflows) every time the server starts, before any migration runs."
@@ -115,7 +448,106 @@
         "label": "Backup location",
         "desc": "Leave empty to use the db-backup folder inside the ComfyTV directory. Snapshots are timestamped folders like 20260805-093000/comfytv.",
         "placeholder": "e.g. D:\\backups\\comfytv"
+      },
+      "enable-mcp": {
+        "label": "Enable MCP server",
+        "desc": "Expose the ComfyTV MCP endpoint (/comfytv/mcp) so agents can read and drive the canvas. Off by default."
+      },
+      "enable-bot": {
+        "label": "Enable ComfyTV Bot",
+        "desc": "Show the embedded bot sidebar and its chat API. Requires the MCP server to be enabled."
+      },
+      "bot-model-claude-code": {
+        "label": "Claude Code model",
+        "desc": "Model passed to claude --model for bot turns. Accepts an alias (sonnet, opus, haiku) or a full model id. Blank = the CLI's own default.",
+        "placeholder": "CLI default"
+      },
+      "bot-model-codex": {
+        "label": "Codex model",
+        "desc": "Model passed to codex -m for bot turns. Blank = the CLI's own default.",
+        "placeholder": "CLI default"
+      },
+      "bot-model-qwen-code": {
+        "label": "Qwen Code model",
+        "desc": "Model passed to qwen -m for bot turns. Blank = the model selected in qwen's own settings.",
+        "placeholder": "CLI default"
+      },
+      "bot-model-local-llm": {
+        "label": "Local LLM model",
+        "desc": "Model id on the local endpoint. Blank = the first model the endpoint reports.",
+        "placeholder": "first available"
+      },
+      "bot-model-comfyui-llm": {
+        "label": "ComfyUI LLM model",
+        "desc": "EXPERIMENTAL — a toy provider, not meant for real use; pick Local LLM or one of the CLI providers instead. Text-encoder checkpoint from models/text_encoders used for bot turns (Qwen3 or Gemma family). Blank = the first generation-capable checkpoint found. Runs inside ComfyUI itself — no external server needed.",
+        "placeholder": "first available"
+      },
+      "bot-comfyui-llm-thinking": {
+        "label": "ComfyUI LLM thinking",
+        "desc": "EXPERIMENTAL — only affects the toy ComfyUI LLM provider. Let Qwen3 models reason in a hidden <think> block before answering. Noticeably smarter tool use, at the cost of extra generation time per turn."
+      },
+      "bot-local-llm-url": {
+        "label": "Local LLM endpoint",
+        "desc": "OpenAI-compatible base URL of a local model server (LM Studio, llama.cpp llama-server, vLLM, Ollama…). The Local LLM provider stays unavailable until this is set. Keyless local endpoints only — no API keys are ever stored.",
+        "placeholder": "http://127.0.0.1:1234/v1"
+      },
+      "bot-enable-comfy-mcp": {
+        "label": "Mount comfy-mcp",
+        "desc": "Also mount the official comfy-mcp server (read-only tool set: node catalog, workflow validation, model/template search) in bot sessions. Claude Code and Qwen Code only — Codex and Local LLM stay comfytv-only."
+      },
+      "bot-comfy-mcp-command": {
+        "label": "comfy-mcp command",
+        "desc": "Command that launches the comfy-mcp stdio server. Blank = find comfy-mcp on PATH.",
+        "placeholder": "comfy-mcp"
+      },
+      "bot-always-allow-runs": {
+        "label": "Always allow bot runs",
+        "desc": "Run stages immediately without an approval card (the default). Disable this to let chats switched to Ask mode pause for your approval before each run."
+      },
+      "enable-skills": {
+        "label": "Enable Agent Skills",
+        "desc": "Serve installed skills to agents over MCP (skill tool + prompts) and to the embedded bot."
+      },
+      "enable-collab": {
+        "label": "Enable collaboration",
+        "desc": "EXPERIMENTAL — do not rely on this in production. Real-time multi-user presence and co-editing over the local network. When off, no collaboration code runs at all (no session, no websocket, no UI). Reload open pages after changing this."
+      },
+      "enable-eagle": {
+        "label": "Enable Eagle integration",
+        "desc": "Connect the local Eagle (eagle.cool) library to ComfyTV: an Eagle panel appears in the sidebar and assets can be sent to Eagle. Requires the Eagle desktop app."
+      },
+      "eagle-api-url": {
+        "label": "Eagle API URL",
+        "desc": "Address of Eagle's local API, default port 41595. Local access only, no token needed.",
+        "placeholder": "http://127.0.0.1:41595"
+      },
+      "eagle-library-path": {
+        "label": "Pinned library path",
+        "desc": "The .library directory dedicated to ComfyTV. Sends only happen while Eagle has this library open (queued otherwise); browsing falls back to reading the directory from disk. Empty = follow whatever library Eagle has open (not recommended).",
+        "placeholder": "e.g. Y:\\Eagle\\ComfyTV.library"
+      },
+      "eagle-send-folder": {
+        "label": "Send target folder",
+        "desc": "Eagle folder that manually sent items are filed into; created automatically if missing. Empty = library root. Auto-archive uses per-project folders instead."
+      },
+      "eagle-auto-send": {
+        "label": "Auto-archive outputs to Eagle",
+        "desc": "Automatically archive every stage output (image/video/audio) into Eagle: filed into a per-project folder, annotation carries the full generation params (prompt/model/…), tagged with the project name. Uses the queue — piles up while Eagle is closed, never blocks generation."
+      },
+      "blender-bridge-url": {
+        "label": "Blender bridge URL",
+        "desc": "EXPERIMENTAL — expect rough edges. Address of the blender-web bridge that the Blender Scene / Camera / Animation stages talk to. Start it with blender-for-comfytv.bat; the stages stay unavailable until it responds. Default port 7684, local only.",
+        "placeholder": "http://127.0.0.1:7684"
       }
+    },
+    "agent": {
+      "section": "Agent & MCP"
+    },
+    "eagle": {
+      "section": "Eagle Integration"
+    },
+    "collab": {
+      "section": "Collaboration"
     }
   },
   "servers": {
@@ -192,6 +624,11 @@
     "defaultSet": "{label} is now the default workflow for this stage",
     "defaultCleared": "{label} is no longer the default — the first listed workflow is used",
     "defaultFailed": "Could not change the default workflow",
+    "hide": "Hide from stage node",
+    "unhide": "Show on stage node",
+    "hiddenSet": "{label} is now hidden from the workflow dropdown on stage nodes",
+    "hiddenCleared": "{label} is shown in the workflow dropdown again",
+    "hiddenFailed": "Could not change workflow visibility",
     "section": {
       "workflows": "Workflows",
       "params": "Parameters"
@@ -211,7 +648,9 @@
       "builtin": "built-in",
       "builtinHint": "Ships with ComfyTV (tracked in git). Workflows without this badge were imported or dropped in by a user.",
       "default": "default",
-      "defaultHint": "Newly added stage nodes of this kind start with this workflow selected. If it is deleted or unlinked, the first listed workflow is used instead."
+      "defaultHint": "Newly added stage nodes of this kind start with this workflow selected. If it is deleted or unlinked, the first listed workflow is used instead.",
+      "hidden": "hidden",
+      "hiddenHint": "Not offered in the workflow dropdown on stage nodes. Nodes that already selected it keep working."
     }
   },
   "assets": {
@@ -237,7 +676,8 @@
       "image": "Images",
       "video": "Video",
       "audio": "Audio",
-      "model": "3D models"
+      "model": "3D models",
+      "text": "Text"
     },
     "category": {
       "all": "All",
@@ -257,7 +697,11 @@
       "tags": "Edit tags",
       "loadNode": "Add as node to canvas",
       "makeProxy": "Generate preview proxy",
-      "more": "More options"
+      "more": "More options",
+      "playPreview": "Play",
+      "pausePreview": "Pause",
+      "fileMissing": "File missing",
+      "fileMissingHint": "The file on disk was deleted; the library entry remains — re-import it or remove the asset"
     },
     "tagPopover": {
       "empty": "No categories yet.",
@@ -268,6 +712,7 @@
     "empty": "No matching assets in the library yet — add some in the Assets panel.",
     "pickHint": "Pick an asset from the library to use as this node's output.",
     "selected": "Selected: {name}",
+    "fileMissing": "Selected asset {name} no longer exists on disk — re-import it or pick another",
     "upload": "Upload files into the library and select the last one"
   },
   "stageParams": {
@@ -358,6 +803,7 @@
     "upload": "Upload images into the library and use them here",
     "tabBatch": "Batch",
     "tabLibrary": "Library",
+    "close": "Close",
     "empty": "No matching assets — add some in the sidebar Assets tab.",
     "missing": "asset #{id} was removed from the library — this chip is ignored at run",
     "slotTitle": "Reference image slot",
@@ -483,6 +929,12 @@
         "tooltip": "Modify an existing video: clip / HD / subtitle erase / audio separation"
       }
     },
+    "audio": {
+      "change": {
+        "label": "Edit Audio",
+        "tooltip": "Process this audio: trim / dynamics / EQ / denoise / mix / analysis"
+      }
+    },
     "text": {
       "refine": {
         "label": "Refine",
@@ -553,6 +1005,16 @@
     "removeTitle": "Remove resource",
     "removeConfirm": "Remove \"{name}\" from the library? The file stays on disk.",
     "missing": "Missing"
+  },
+  "skills": {
+    "section": "Skills",
+    "hint": "Skills are SKILL.md instruction packs served to agents via MCP. Import a .zip containing one skill folder; files live under user/comfytv/skills.",
+    "import": "Import skill (.zip)",
+    "empty": "No skills installed",
+    "remove": "Delete",
+    "removeTitle": "Delete skill",
+    "removeConfirm": "Delete skill \"{name}\" from disk? This cannot be undone.",
+    "source": { "builtin": "built-in", "user": "user" }
   },
   "presets": {
     "imageVariant": {
@@ -904,6 +1366,33 @@
         "label": "FX Chain",
         "tooltip": "Chain multiple FX specs into one render pass"
       }
+    },
+    "audioChange": {
+      "clip": { "label": "Trim", "tooltip": "Trim the audio on a waveform timeline" },
+      "split": { "label": "Split", "tooltip": "Cut the audio in two at a point" },
+      "dynamics": { "label": "Compressor", "tooltip": "Compressor / gate / limiter / de-esser" },
+      "loudness": { "label": "Loudness", "tooltip": "Normalize loudness (EBU R128 and friends)" },
+      "duck": { "label": "Ducking", "tooltip": "Duck this track under a sidechain voice" },
+      "eq": { "label": "EQ", "tooltip": "Parametric equalizer with an interactive curve" },
+      "saturate": { "label": "Saturate", "tooltip": "Warmth, drive and soft clipping" },
+      "modulation": { "label": "Modulation", "tooltip": "Chorus, flanger, phaser, vibrato, tremolo" },
+      "echo": { "label": "Echo", "tooltip": "Delay and echo presets" },
+      "stereo": { "label": "Stereo Field", "tooltip": "Pan, width and mid-side tools" },
+      "time-pitch": { "label": "Time & Pitch", "tooltip": "Change speed and pitch independently" },
+      "denoise": { "label": "Denoise", "tooltip": "Broadband noise removal filters" },
+      "noise-reduction": { "label": "Spectral Gate", "tooltip": "Spectral gating noise reduction, optional noise print" },
+      "repair": { "label": "Repair", "tooltip": "De-click, de-clip and hum removal" },
+      "convolve": { "label": "Convolve IR", "tooltip": "Convolution reverb from an impulse response" },
+      "deconvolve": { "label": "Deconvolve", "tooltip": "Recover an impulse response from a sweep recording" },
+      "muse-reverb": { "label": "Reverb", "tooltip": "Algorithmic FDN reverb" },
+      "mix": { "label": "Mixer", "tooltip": "Mix up to four tracks with gain and pan" },
+      "crossfade": { "label": "Crossfade", "tooltip": "Crossfade two tracks with curve control" },
+      "stem-split": { "label": "Stem Split", "tooltip": "Separate vocals, drums, bass and accompaniment" },
+      "analyze": { "label": "Analyze", "tooltip": "Loudness, stats and silence analysis report" },
+      "mir": { "label": "Music Info", "tooltip": "Detect beats, onsets and notes as labels" },
+      "visualize": { "label": "Visualize", "tooltip": "Render a waveform or spectrum image" },
+      "segment-export": { "label": "Segments", "tooltip": "Detect segments and export them as files" },
+      "reactive": { "label": "Reactive Keys", "tooltip": "Turn the beat into animation keyframes" }
     }
   },
   "shotCell": {
@@ -968,6 +1457,7 @@
     "rotateTooltip": "Drag the round handle to rotate (Shift = 15° steps)"
   },
   "videoTrim": {
+    "frameStepHint": "Drag to position · ←/→ steps one frame",
     "noInputVideo": "No input video — connect a video upstream",
     "loading": "Loading…",
     "loadError": "Failed to load video",
@@ -1010,6 +1500,27 @@
     "adjustThenRun": "Rotate / flip (preview is live), then Run"
   },
   "videoSplit": {
+    "splitPoint": "Cut",
+    "splitting": "Splitting…",
+    "done": "Split done — A and B ready for downstream",
+    "adjustThenRun": "Drag the handle to place the cut, then Run"
+  },
+  "audioTrim": {
+    "frameStepHint": "Drag to position · ←/→ nudges 10 ms",
+    "noInputAudio": "No input audio — connect an audio or video upstream",
+    "loading": "Loading…",
+    "loadError": "Failed to load audio",
+    "playSelection": "Play selection",
+    "pause": "Pause",
+    "start": "In",
+    "end": "Out",
+    "reset": "Reset",
+    "resetTooltip": "Select the whole audio",
+    "trimming": "Trimming…",
+    "trimmed": "Audio trimmed — ready for downstream",
+    "adjustThenRun": "Drag the handles to pick a range, then Run"
+  },
+  "audioSplit": {
     "splitPoint": "Cut",
     "splitting": "Splitting…",
     "done": "Split done — A and B ready for downstream",
@@ -1200,7 +1711,11 @@
     "clipPrompt": "Clip prompt",
     "workflow": "Workflow",
     "sharedRefsHint": "The reference pool for the whole piece. In each clip's prompt, {'@'} the ones that clip should use; a clip with no {'@'} mentions sends the whole pool automatically.",
-    "kind": { "image": "image", "video": "video", "audio": "audio" },
+    "kind": {
+      "image": "image",
+      "video": "video",
+      "audio": "audio"
+    },
     "refNotConsumed": "\"{workflow}\" doesn't consume {kind} references — they will be ignored at run time",
     "refOverLimit": "This workflow consumes at most {n} of these — extra ones will be ignored",
     "transition": "Transition in",
@@ -1215,7 +1730,12 @@
     "cached": "Cached — will not regenerate",
     "generated": "Generated this run",
     "previewClip": "Preview this clip",
-    "clipPreview": "Clip preview"
+    "clipPreview": "Clip preview",
+    "play": "Play preview",
+    "pause": "Pause",
+    "playDisabled": "Nothing to preview yet — run the director first",
+    "filmPreview": "Film preview",
+    "clipsPreview": "Rough cut (per-clip, film not assembled yet)"
   },
   "gridSplit": {
     "connectImage": "Connect an image to split",
@@ -1460,6 +1980,10 @@
     "promptHelp": "Prompt assets are inserted EXPANDED into the prompt (text + slot chips), not as a tag. They may reference slots ({'@'}image_N / {'@'}video_N / {'@'}audio_N) but no other entries.",
     "promptRefsError": "Prompt assets can't reference other entries — remove: {tokens}"
   },
+  "promptUpstream": {
+    "connected": "{n} connected text input(s) will be appended to this prompt at run",
+    "pending": "(upstream not run yet)"
+  },
   "promptSave": {
     "open": "Save this prompt as a reusable asset (Entries → Prompts)",
     "hint": "Slot references ({'@'}image_N …) are kept; references to other entries are not allowed.",
@@ -1474,11 +1998,30 @@
     "searchPlaceholder": "Search label or content…",
     "noMatch": "No entries match."
   },
+  "collab": {
+    "editName": "Edit your display name",
+    "you": "you",
+    "offline": "Collaboration is connecting…",
+    "alone": "No one else is online.",
+    "stale": "stale",
+    "badgeOnline": "{count} online",
+    "badgeEditing": "co-editing · {count}",
+    "badgeTooltip": "ComfyTV collaboration — see the ComfyTV sidebar",
+    "toastTitle": "ComfyTV collaboration",
+    "someoneStarted": "Someone started co-editing this project. Join from the ComfyTV sidebar.",
+    "start": "start co-editing",
+    "joinEdit": "join co-editing",
+    "joinEditConfirm": "Joining will REPLACE this tab's canvas with the shared graph. Unsaved local changes will be lost. Continue?",
+    "coEditing": "co-editing",
+    "liveSession": "Co-editing in progress",
+    "emptyCanvas": "No stages on the shared canvas yet."
+  },
   "menu": {
     "openEntryManager": "ComfyTV — open entry manager",
     "entriesTitle": "ComfyTV Entries",
     "entriesButtonTooltip": "ComfyTV — entries (fragments / characters / …)",
-    "configSidebarTooltip": "ComfyTV — workflow config & asset library"
+    "configSidebarTooltip": "ComfyTV — workflow config & asset library",
+    "botSidebarTooltip": "ComfyTV Bot - chat with an agent that drives the canvas"
   },
   "valuePreview": {
     "moreShots": "+ {n} more",
@@ -1515,7 +2058,21 @@
     "unlink": "Unlink",
     "unlinking": "Unlinking…",
     "unlinkedToast": "Unlinked \"{label}\"",
-    "unlinkFailed": "Unlink failed"
+    "unlinkFailed": "Unlink failed",
+    "sourceLabel": "Source",
+    "sourceLocal": "This machine",
+    "introRemote": "Browse the remote machine's ComfyUI workflow library. Pull copies the original graph-format workflow into ComfyTV's local library — configure its bindings here, then run it on any server.",
+    "pull": "Pull",
+    "pulling": "Pulling…",
+    "repull": "Pull again",
+    "pulledBadge": "Pulled",
+    "pulledToast": "Pulled \"{label}\"",
+    "pullFailed": "Pull failed"
+  },
+  "openInComfy": {
+    "open": "Open in ComfyUI",
+    "tooltip": "Open this workflow in a new ComfyUI tab",
+    "failed": "Couldn't open in ComfyUI: {detail}"
   },
   "scene3d": {
     "undo": "Undo",
@@ -1560,6 +2117,27 @@
     "freeCamera": "Free camera",
     "playPause": "Play / pause",
     "timelineLoop": "Loop playback",
+    "shotsTrack": "Shots",
+    "addShot": "Shot",
+    "shotCamera": "Camera",
+    "shotLock": "Lock target",
+    "shotLockNone": "None (free)",
+    "shotDuration": "Frames",
+    "shotMoveUp": "Move earlier",
+    "shotMoveDown": "Move later",
+    "addPath": "Add path",
+    "addPathHint": "Lay a walk path; drag anchors in the viewport to shape it",
+    "removePath": "Remove path",
+    "addPrompt": "Prompt",
+    "promptEmpty": "(empty)",
+    "promptStart": "Start",
+    "promptEnd": "End",
+    "promptPlaceholder": "Prompt for this frame range (feeds downstream generation)",
+    "autoPrompts": "Auto-generate",
+    "autoPromptsHint": "Generate camera-language prompts (shot size, angle, lens, move) for every shot",
+    "planView": "Plan view",
+    "floorOnly": "Floor only",
+    "tintColor": "Tint",
     "presetFovScale": "FOV scale",
     "presetPathScale": "Path scale",
     "presetYaw": "Yaw",
@@ -1574,7 +2152,8 @@
       "color": "Image",
       "depth": "Depth",
       "normal": "Normal",
-      "openpose": "OpenPose"
+      "openpose": "OpenPose",
+      "id": "ID Matte"
     },
     "fps": "FPS",
     "frameCount": "Frames",
@@ -2181,5 +2760,62 @@
     "capture": "Capture",
     "captureHint": "Upload composite + one image per visible layer",
     "saveToLibraryHint": "Save layered PSD into the asset library"
+  },
+  "appMode": {
+    "hint": "This workflow contains ComfyTV stages — they only render in the Graph view, so App Mode shows nothing here.",
+    "back": "Back to workflow"
+  },
+  "bot": {
+    "title": "ComfyTV Bot",
+    "newChat": "New chat",
+    "backToList": "All chats",
+    "untitled": "New chat",
+    "noChats": "No conversations yet. The bot can drive the canvas through the ComfyTV tools.",
+    "startFirst": "Start a conversation",
+    "emptyChat": "Ask anything - the bot can read and edit the canvas.",
+    "inputPlaceholder": "Message the bot... (Enter to send, Shift+Enter for newline)",
+    "send": "Send",
+    "stop": "Stop",
+    "thinking": "Working...",
+    "aborted": "Stopped.",
+    "turnError": "The turn failed. Check the server log for details.",
+    "toolResult": "Tool result",
+    "activitySteps": "Process · {n} tool calls",
+    "noToolCalls": "0 tool calls — nothing on the canvas was touched this turn",
+    "rename": "Rename",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "delete": "Delete",
+    "deleteConfirm": "Delete chat \"{title}\"? This cannot be undone.",
+    "multiSelect": "Select chats",
+    "selectAll": "Select all",
+    "selectedCount": "{count} selected",
+    "deleteSelected": "Delete selected",
+    "cancelSelect": "Exit selection",
+    "batchDeleteConfirm": "Delete the {count} selected chats? This cannot be undone.",
+    "noProviderTitle": "No local agent CLI found",
+    "noProviderBody": "The ComfyTV bot drives your canvas through a locally installed agent CLI (Claude Code). Install it, sign in once, then come back - no API key is ever stored.",
+    "recheck": "Check again",
+    "attachImage": "Attach media file",
+    "removeAttachment": "Remove",
+    "dropHint": "Drop images, videos or audio to attach",
+    "attachFromLibrary": "Attach from asset library",
+    "newChatWith": "New chat with:",
+    "removeSkill": "Remove skill",
+    "noResult": "(no result)",
+    "copyCode": "Copy code",
+    "runModeAuto": "Auto",
+    "runModeAsk": "Ask",
+    "runModeHint": "Auto runs stages immediately; Ask pauses for your approval before each run",
+    "askSubmit": "Submit",
+    "askOtherPlaceholder": "Or answer in your own words...",
+    "askExpired": "Expired without an answer",
+    "askCancelled": "Cancelled",
+    "insertFromCanvas": "Reference the stages selected on the canvas",
+    "removeRef": "Remove reference",
+    "branch": "Branch",
+    "branchFrom": "Start a new chat that continues from this reply",
+    "queue": "Queue",
+    "queuedHint": "Queued — sends when the current turn finishes"
   }
 }

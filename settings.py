@@ -9,9 +9,33 @@ CUSTOM_NODE_DIR = os.path.dirname(os.path.realpath(__file__))
 PROPERTIES_FILENAME = "comfytv.properties"
 
 SETTINGS_SPEC: dict[str, dict[str, Any]] = {
+    "enable-v2": {"type": "boolean", "default": False, "experimental": True},
+    "v2-lod-scale": {"type": "choice", "default": "42", "options": ["30", "42", "50", "60"]},
+    "v2-lod-fill": {"type": "choice", "default": "checker", "options": ["checker", "image"]},
     "enable-db-backup": {"type": "boolean", "default": True},
     "db-backup-max-count": {"type": "int", "default": 10, "min": 1},
     "db-backup-path": {"type": "string", "default": ""},
+    "enable-mcp": {"type": "boolean", "default": False},
+    "enable-bot": {"type": "boolean", "default": False},
+    "bot-model-claude-code": {"type": "string", "default": ""},
+    "bot-model-codex": {"type": "string", "default": ""},
+    "bot-model-qwen-code": {"type": "string", "default": ""},
+    "bot-local-llm-url": {"type": "string", "default": ""},
+    "bot-model-local-llm": {"type": "string", "default": ""},
+    "bot-model-comfyui-llm": {"type": "string", "default": "", "experimental": True},
+    "bot-comfyui-llm-thinking": {"type": "boolean", "default": True, "experimental": True},
+    "bot-enable-comfy-mcp": {"type": "boolean", "default": False},
+    "bot-comfy-mcp-command": {"type": "string", "default": ""},
+    "bot-always-allow-runs": {"type": "boolean", "default": True},
+    "enable-skills": {"type": "boolean", "default": True},
+    "skills-disabled": {"type": "string", "default": "[]"},
+    "enable-collab": {"type": "boolean", "default": False, "experimental": True},
+    "enable-eagle": {"type": "boolean", "default": False},
+    "eagle-api-url": {"type": "string", "default": "http://127.0.0.1:41595"},
+    "eagle-library-path": {"type": "string", "default": ""},
+    "eagle-send-folder": {"type": "string", "default": "ComfyTV"},
+    "eagle-auto-send": {"type": "boolean", "default": False},
+    "blender-bridge-url": {"type": "string", "default": "http://127.0.0.1:7684", "experimental": True},
 }
 
 
@@ -66,6 +90,9 @@ def coerce(key: str, raw: Any) -> Any:
             if hi is not None and value > hi:
                 return default
             return value
+        if kind == "choice":
+            text = str(raw).strip()
+            return text if text in spec["options"] else default
         return str(raw)
     except (ValueError, TypeError):
         return default

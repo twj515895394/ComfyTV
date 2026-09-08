@@ -6,23 +6,54 @@
     draggable="true"
   >
     <div class="ctv:relative ctv:aspect-square ctv:overflow-hidden ctv:rounded-lg ctv:bg-secondary-background">
-      <video
+      <div
         v-if="asset.media_type === 'video'"
-        :src="proxiedUrl ?? undefined"
         :title="tooltip"
-        muted
-        playsinline
-        preload="metadata"
-        class="ctv-asset-thumb ctv:absolute ctv:inset-0 ctv:size-full ctv:object-cover ctv:bg-black"
-        @mouseenter="hoverPlay"
-        @mouseleave="hoverPause"
-      />
+        class="ctv:absolute ctv:inset-0 ctv:bg-black"
+        @mouseenter="videoHover = true"
+        @mouseleave="videoHover = false"
+      >
+        <video
+          v-if="videoHover"
+          :src="proxiedUrl ?? undefined"
+          autoplay
+          muted
+          playsinline
+          class="ctv-asset-thumb ctv:absolute ctv:inset-0 ctv:size-full ctv:object-cover"
+          @canplay="hoverAutoplay"
+        />
+        <ThumbImg
+          v-else
+          :src="asset.payload_url"
+          :thumb-max="THUMB_CELL"
+          :alt="asset.name"
+          loading="lazy"
+          class="ctv-asset-thumb ctv:absolute ctv:inset-0 ctv:size-full ctv:object-cover"
+        />
+      </div>
       <div
         v-else-if="asset.media_type === 'audio'"
         :title="tooltip"
         class="ctv:absolute ctv:inset-0 ctv:flex ctv:items-center ctv:justify-center ctv:text-muted-foreground"
       >
-        <IconVolume2 class="ctv:size-8" />
+        <button
+          type="button"
+          class="ctv:flex ctv:size-12 ctv:items-center ctv:justify-center ctv:cursor-pointer ctv:appearance-none
+                 ctv:rounded-full ctv:border-none ctv:shadow-sm ctv:bg-black/55 ctv:text-white/90 ctv:hover:bg-black/75"
+          :title="audioPlaying ? $t('assets.card.pausePreview') : $t('assets.card.playPreview')"
+          @click.stop="toggleAudio(asset.payload_url)"
+          @pointerdown.stop
+        >
+          <IconPause v-if="audioPlaying" class="ctv:size-5" />
+          <IconPlay v-else class="ctv:size-5 ctv:ml-0.5" />
+        </button>
+      </div>
+      <div
+        v-else-if="asset.media_type === 'text'"
+        :title="tooltip"
+        class="ctv:absolute ctv:inset-0 ctv:flex ctv:items-center ctv:justify-center ctv:text-muted-foreground"
+      >
+        <IconFileText class="ctv:size-8" />
       </div>
       <div
         v-else-if="asset.media_type === 'model'"
@@ -33,9 +64,10 @@
           <IconBox class="ctv:size-8" />
         </ModelThumb>
       </div>
-      <img
+      <ThumbImg
         v-else
         :src="assetPreviewUrl(asset)"
+        :thumb-max="THUMB_CELL"
         :alt="asset.name"
         :title="tooltip"
         loading="lazy"
@@ -50,6 +82,12 @@
         <IconPlay v-if="asset.media_type === 'video'" class="ctv:size-3" />
         <IconVolume2 v-else class="ctv:size-3" />
       </span>
+
+      <span
+        v-if="asset.file_missing"
+        class="ctv:absolute ctv:top-1.5 ctv:right-1.5 ctv:px-1 ctv:py-px ctv:rounded-sm ctv:text-3xs ctv:font-semibold ctv:tracking-wide
+               ctv:bg-destructive-background ctv:text-white ctv:pointer-events-none"
+      >{{ $t('assets.card.fileMissing') }}</span>
 
       <span
         v-if="isProxy"
@@ -111,16 +149,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import IconBox from '~icons/lucide/box'
 import { assetPreviewUrl } from '@/utils/assetMedia'
+import { THUMB_CELL } from '@/utils/thumbUrl'
 import IconEllipsis from '~icons/lucide/ellipsis'
+import IconFileText from '~icons/lucide/file-text'
 import IconMaximize from '~icons/lucide/maximize-2'
+import IconPause from '~icons/lucide/pause'
 import IconPlay from '~icons/lucide/play'
 import IconVolume2 from '~icons/lucide/volume-2'
 
 import type { Asset } from '@/api/schemas'
 import ModelThumb from '@/components/widgets/ModelThumb.vue'
+import ThumbImg from '@/components/widgets/ThumbImg.vue'
+import { useAudioPreview } from '@/composables/sidebar/useAudioPreview'
 import { useProxiedVideoUrl } from '@/composables/widgets/useProxiedVideoUrl'
 
 const props = defineProps<{
@@ -129,6 +172,9 @@ const props = defineProps<{
   categoryNames: string[]
   tooltip: string
 }>()
+
+const { playingUrl, toggle: toggleAudio } = useAudioPreview()
+const audioPlaying = computed(() => playingUrl.value === props.asset.payload_url)
 
 const videoSrc = computed(() =>
   props.asset.media_type === 'video' ? props.asset.payload_url : null)
@@ -141,13 +187,10 @@ const emit = defineEmits<{
   'view-full': []
 }>()
 
-function hoverPlay(e: MouseEvent) {
+const videoHover = ref(false)
+
+function hoverAutoplay(e: Event) {
   void (e.currentTarget as HTMLVideoElement).play().catch(() => {})
-}
-function hoverPause(e: MouseEvent) {
-  const v = e.currentTarget as HTMLVideoElement
-  v.pause()
-  v.currentTime = 0
 }
 </script>
 

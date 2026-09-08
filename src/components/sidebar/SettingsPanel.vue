@@ -1,4 +1,5 @@
 <template>
+  <TooltipProvider>
   <div class="ctv:relative ctv:flex ctv:flex-col ctv:size-full ctv:box-border ctv:overflow-hidden ctv:text-xs ctv:text-base-foreground">
     <div class="ctv:shrink-0 ctv:flex ctv:items-center ctv:gap-2 ctv:py-1.5 ctv:px-2.5
                 ctv:bg-interface-panel-surface ctv:border-b ctv:border-border-subtle">
@@ -9,14 +10,21 @@
         @click="save"
       >
         {{ saving ? $t('settings.saving') : $t('settings.save') }}
+        <span v-if="dirtyCount && !saving">({{ dirtyCount }})</span>
       </button>
     </div>
 
-    <div class="ctv:flex-1 ctv:min-h-0 ctv:overflow-y-auto ctv:p-1.5 ctv:flex ctv:flex-col ctv:gap-1.5">
-      <div class="ctv:text-muted-foreground ctv:px-1 ctv:leading-relaxed">
-        {{ $t('settings.hint') }}
-      </div>
+    <div class="ctv:shrink-0 ctv:flex ctv:items-center ctv:gap-1.5 ctv:px-1.5 ctv:pt-1.5">
+      <IconSearch class="ctv:shrink-0 ctv:size-3.5 ctv:text-muted-foreground" />
+      <ComfyTVText
+        class="ctv:flex-1"
+        :model-value="query"
+        :placeholder="$t('settings.search')"
+        @update:model-value="(v: string) => query = v"
+      />
+    </div>
 
+    <div class="ctv:flex-1 ctv:min-h-0 ctv:overflow-y-auto ctv:p-1.5 ctv:flex ctv:flex-col ctv:gap-1.5">
       <div v-if="error" class="ctv:py-1 ctv:px-1.5 ctv:rounded ctv:bg-destructive-background/15 ctv:text-destructive-background">
         {{ error }}
       </div>
@@ -29,99 +37,110 @@
       </div>
 
       <template v-else>
-        <div class="ctv:mt-1 ctv:px-1 ctv:font-semibold ctv:text-muted-foreground ctv:uppercase ctv:text-2xs ctv:tracking-wide">
-          {{ $t('settings.backup.section') }}
-        </div>
-
-        <div
-          v-for="row in rows"
-          :key="row.key"
-          class="ctv:flex ctv:flex-col ctv:gap-1 ctv:py-1.5 ctv:px-2 ctv:rounded-lg
-                 ctv:bg-secondary-background ctv:border ctv:border-border-subtle"
+        <SettingsSection
+          v-for="s in sections"
+          :key="s.id"
+          :section="s"
+          :title="$t(`settings.${s.id}.section`)"
+          :collapsed="isCollapsed(s.id)"
+          :master-on="s.master !== null && values[s.master.key] === true"
+          @toggle="toggleCollapsed(s.id)"
+          @master="(v) => s.master && setValue(s.master.key, v)"
         >
-          <div class="ctv:flex ctv:items-center ctv:gap-2">
-            <div class="ctv:flex-1 ctv:min-w-0">
-              <div class="ctv:font-semibold">{{ $t(`settings.fields.${row.key}.label`) }}</div>
-              <div class="ctv:text-muted-foreground ctv:leading-relaxed">
-                {{ $t(`settings.fields.${row.key}.desc`) }}
-              </div>
+          <SettingItem
+            v-for="row in s.rows"
+            :key="row.key"
+            :row="row"
+            :value="values[row.key]"
+            :depth="depthOf(row.key)"
+            :suggestions="modelSuggestions(row.key)"
+            @update="(v) => setValue(row.key, v)"
+          />
+          <div v-if="s.id === 'backup'" class="ctv:flex ctv:flex-col ctv:gap-1 ctv:px-2 ctv:py-1.5">
+            <div>
+              <button :class="chipBtnClass" :disabled="backingUp" @click="backupNow">
+                {{ backingUp ? $t('settings.backup.running') : $t('settings.backup.now') }}
+              </button>
             </div>
-            <ComfyTVToggle
-              v-if="row.type === 'boolean'"
-              :model-value="values[row.key] === true"
-              @update:model-value="(v: boolean) => setValue(row.key, v)"
+            <div
+              v-if="backupResult"
+              class="ctv:py-1 ctv:px-1.5 ctv:rounded ctv:break-all"
+              :class="backupResult.ok
+                ? 'ctv:bg-emerald-500/10 ctv:text-emerald-400'
+                : 'ctv:bg-destructive-background/15 ctv:text-destructive-background'"
+            >
+              <template v-if="backupResult.ok">
+                ✓ {{ $t('settings.backup.ok', { path: backupResult.path ?? '' }) }}
+              </template>
+              <template v-else>
+                ✗ {{ $t('settings.backup.failed', { error: backupResult.error ?? '' }) }}
+              </template>
+            </div>
+          </div>
+          <div v-if="s.id === 'agent' && skillsVisible && !query" class="ctv:px-2 ctv:py-1">
+            <SkillsSection
+              :active="props.active"
+              :collapsed="isCollapsed('skills')"
+              @toggle="toggleCollapsed('skills')"
             />
           </div>
-          <ComfyTVNumber
-            v-if="row.type === 'int'"
-            class="ctv:w-28"
-            :model-value="Number(values[row.key] ?? row.default)"
-            :min="1"
-            :precision="0"
-            @update:model-value="(v: number | null) => setValue(row.key, v ?? row.default)"
-          />
-          <ComfyTVText
-            v-if="row.type === 'string'"
-            :model-value="String(values[row.key] ?? '')"
-            :placeholder="placeholderFor(row.key)"
-            @update:model-value="(v: string) => setValue(row.key, v)"
-          />
-        </div>
+        </SettingsSection>
 
-        <div class="ctv:flex ctv:items-center ctv:gap-1.5 ctv:px-1 ctv:pt-1">
-          <button :class="chipBtnClass" :disabled="backingUp" @click="backupNow">
-            {{ backingUp ? $t('settings.backup.running') : $t('settings.backup.now') }}
-          </button>
-        </div>
         <div
-          v-if="backupResult"
-          class="ctv:py-1 ctv:px-1.5 ctv:rounded ctv:break-all"
-          :class="backupResult.ok
-            ? 'ctv:bg-emerald-500/10 ctv:text-emerald-400'
-            : 'ctv:bg-destructive-background/15 ctv:text-destructive-background'"
+          v-if="!sections.length"
+          class="ctv:py-5 ctv:px-1.5 ctv:text-center ctv:italic ctv:text-muted-foreground/60"
         >
-          <template v-if="backupResult.ok">
-            ✓ {{ $t('settings.backup.ok', { path: backupResult.path ?? '' }) }}
-          </template>
-          <template v-else>
-            ✗ {{ $t('settings.backup.failed', { error: backupResult.error ?? '' }) }}
-          </template>
+          {{ $t('settings.noMatch') }}
         </div>
       </template>
+
+      <div class="ctv:mt-auto ctv:pt-2 ctv:px-1 ctv:text-2xs ctv:text-muted-foreground/70 ctv:leading-relaxed">
+        {{ $t('settings.hint') }}
+      </div>
     </div>
   </div>
+  </TooltipProvider>
 </template>
 
 <script setup lang="ts">
+import { TooltipProvider } from 'reka-ui'
 import { useI18n } from 'vue-i18n'
 
-import ComfyTVNumber from '@/components/widgets/ComfyTVNumber.vue'
+import SettingItem from '@/components/sidebar/SettingItem.vue'
+import SettingsSection from '@/components/sidebar/SettingsSection.vue'
+import SkillsSection from '@/components/sidebar/SkillsSection.vue'
 import ComfyTVText from '@/components/widgets/ComfyTVText.vue'
-import ComfyTVToggle from '@/components/widgets/ComfyTVToggle.vue'
-import { useSettingsPanel } from '@/composables/sidebar/useSettingsPanel'
+import { depthOf, useSettingsPanel } from '@/composables/sidebar/useSettingsPanel'
+
+import IconSearch from '~icons/lucide/search'
 
 const props = defineProps<{ active?: boolean }>()
 
-const { t, te } = useI18n()
+const { t } = useI18n()
 
 const {
   rows,
   values,
+  query,
+  sections,
+  skillsVisible,
   loading,
   saving,
   backingUp,
   error,
   dirty,
+  dirtyCount,
   backupResult,
+  isCollapsed,
+  toggleCollapsed,
   setValue,
   save,
   backupNow,
-} = useSettingsPanel(() => props.active)
-
-function placeholderFor(key: string): string {
-  const k = `settings.fields.${key}.placeholder`
-  return te(k) ? t(k) : ''
-}
+  modelSuggestions,
+} = useSettingsPanel(
+  () => props.active,
+  (key) => `${t(`settings.fields.${key}.label`)} ${t(`settings.fields.${key}.desc`)}`,
+)
 
 const primaryBtnClass = 'ctv:shrink-0 ctv:inline-flex ctv:items-center ctv:gap-1 ctv:cursor-pointer ctv:[font-family:inherit] '
   + 'ctv:rounded-lg ctv:border-none ctv:px-2 ctv:py-1 ctv:text-xs '

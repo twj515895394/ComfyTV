@@ -7,7 +7,7 @@ vi.mock('@/composables/stages/stageMeta', () => ({
   getStageMeta: (...a: any[]) => getStageMeta(...a),
 }))
 
-import { addOptionEverywhere, removeOptionEverywhere } from './workflowCombo'
+import { addOptionEverywhere, comboOptionsVersion, removeOptionEverywhere, setDefaultOptionInDefs } from './workflowCombo'
 
 function stage(kind: string, value: string, values: string[], cb = vi.fn()) {
   return {
@@ -17,6 +17,14 @@ function stage(kind: string, value: string, values: string[], cb = vi.fn()) {
   }
 }
 
+function registerDef(kind: string, options: string[], def = options[0] ?? '') {
+  const spec = { options: [...options], default: def }
+  ;(window as any).LiteGraph.registered_node_types[`ComfyTV.${kind}Stage`] = {
+    nodeData: { inputs: { workflow: spec } },
+  }
+  return spec
+}
+
 describe('workflowCombo', () => {
   beforeEach(() => {
     getStageMeta.mockReset()
@@ -24,6 +32,7 @@ describe('workflowCombo', () => {
       workflow_kind: cls?.includes('image') ? 'image' : 'video',
     }))
     ;(app as any).graph._nodes = []
+    ;(window as any).LiteGraph = { registered_node_types: {} }
   })
 
   describe('addOptionEverywhere', () => {
@@ -70,6 +79,17 @@ describe('workflowCombo', () => {
       expect(cb).toHaveBeenCalledWith('')
     })
 
+    it('keeps the current value when reassignValue is false', () => {
+      const cb = vi.fn()
+      const img = stage('image', 'B', ['A', 'B'], cb)
+      ;(app as any).graph._nodes = [img]
+
+      removeOptionEverywhere('image', 'B', false)
+      expect(img.widgets[0].options.values).toEqual(['A'])
+      expect(img.widgets[0].value).toBe('B')
+      expect(cb).not.toHaveBeenCalled()
+    })
+
     it('leaves other kinds untouched', () => {
       const vid = stage('video', 'B', ['A', 'B'])
       ;(app as any).graph._nodes = [vid]
@@ -77,6 +97,44 @@ describe('workflowCombo', () => {
       removeOptionEverywhere('image', 'B')
       expect(vid.widgets[0].options.values).toEqual(['A', 'B'])
       expect(vid.widgets[0].value).toBe('B')
+    })
+  })
+
+  describe('registered node def patching', () => {
+    it('add pushes into the def options without dupes', () => {
+      const spec = registerDef('image', ['A'])
+      addOptionEverywhere('image', 'B')
+      addOptionEverywhere('image', 'B')
+      expect(spec.options).toEqual(['A', 'B'])
+    })
+
+    it('remove splices the def options and reassigns a removed default', () => {
+      const spec = registerDef('image', ['A', 'B'], 'B')
+      removeOptionEverywhere('image', 'B', false)
+      expect(spec.options).toEqual(['A'])
+      expect(spec.default).toBe('A')
+    })
+
+    it('setDefaultOptionInDefs sets and clears back to the first option', () => {
+      const spec = registerDef('image', ['A', 'B'], 'A')
+      setDefaultOptionInDefs('image', 'B')
+      expect(spec.default).toBe('B')
+      setDefaultOptionInDefs('image', null)
+      expect(spec.default).toBe('A')
+    })
+
+    it('ignores defs of other kinds', () => {
+      const spec = registerDef('video', ['X'])
+      addOptionEverywhere('image', 'B')
+      expect(spec.options).toEqual(['X'])
+    })
+
+    it('bumps comboOptionsVersion so Vue consumers re-render', () => {
+      const before = comboOptionsVersion.value
+      addOptionEverywhere('image', 'B')
+      expect(comboOptionsVersion.value).toBe(before + 1)
+      removeOptionEverywhere('image', 'B', false)
+      expect(comboOptionsVersion.value).toBe(before + 2)
     })
   })
 })

@@ -2,6 +2,8 @@
 import { createPinia, getActivePinia, setActivePinia } from 'pinia'
 
 import ComfyTVSidebar from '@/components/sidebar/ComfyTVSidebar.vue'
+import { syncBotTab } from '@/composables/sidebar/botTab'
+import { useBotStore } from '@/stores/botStore'
 import StageCard from '@/components/stages/StageCard.vue'
 import {
   RICH_STAGE_CARDS,
@@ -34,14 +36,35 @@ import './tailwind.css'
 import './style.css'
 
 import { app, type ComfyNode } from '@/lib/comfyApp'
-import {
-  isHeadlessConvertMode,
-  runHeadlessConvertWorker,
-} from '@/composables/stages/headlessConvert'
 import type { ComfyExtension, ComfyNodeDef } from '@comfyorg/comfyui-frontend-types'
 import { applyHiddenWidgetFlags, getWidget } from '@/utils/widget'
 import { checkThemeTokens } from '@/utils/devTokenCheck'
 import { installGlobalRunBridge } from '@/utils/globalRunBridge'
+import { installCanvasMirror } from '@/composables/stages/useCanvasMirror'
+import { installCollabPresence } from '@/collab/useCollabPresence'
+import { collabTopbarBadge } from '@/collab/topbarBadge'
+import { usePresenceStore } from '@/collab/presenceStore'
+import { execTopbarBadge, installExecBadge } from '@/composables/execBadge'
+import { installMcpCommandBus } from '@/composables/stages/useMcpCommandBus'
+import { installAppModeHint } from '@/composables/appModeHint'
+import { installWorkflowRegistrySync } from '@/composables/stages/workflowRegistrySync'
+import '@/v2/imageBatchShell'
+import '@/v2/poolPickersV2'
+import '@/v2/cropV2'
+import '@/v2/transformV2'
+import '@/v2/videoFxChainConfigs'
+import '@/v2/videoFxToolConfigs'
+import '@/v2/audioFxV2'
+import '@/v2/richV2'
+import '@/v2/scene3dV2'
+import '@/v2/relightV2'
+import '@/v2/loadersV2'
+import '@/v2/generatorV2'
+import { V2_SHELLS } from '@/v2/registry'
+import { hydrateV2Flag, isV2Enabled } from '@/v2/flagV2'
+import { installPlaybackArbiter } from '@/composables/widgets/playbackArbiter'
+import { installCameraMotionLod } from '@/composables/widgets/cameraMotionLod'
+import { installV2Lod } from '@/v2/lodV2'
 
 ;(window as any).__comfytv_host_pinia = getActivePinia()
 
@@ -49,6 +72,12 @@ const pinia = createPinia()
 setActivePinia(pinia)
 
 loadStageMeta()
+
+const v2Ready = hydrateV2Flag()
+
+installPlaybackArbiter()
+installCameraMotionLod()
+installV2Lod()
 
 useExecutionStore().bindToApi(app.api)
 
@@ -65,6 +94,7 @@ let mountKeySeq = 0
 })()
 
 const GENERIC_STAGE_MIN_HEIGHT = 380
+const SEEDED_HEIGHT_STAGES = new Set(['ComfyTV.LayerEditorStage'])
 const TEXT_PREVIEW_WIDGET_NAME = '$$node-text-preview'
 const TEXT_PREVIEW_MAX_HEIGHT = 120
 
@@ -104,6 +134,12 @@ function mountStage(node: ComfyNode, kind: StageKind, variant: StageVariant = 'g
   if (FLEX_FILL_STAGES.has(node.comfyClass)) {
     Object.assign(container.style, {
       display: 'flex', flexDirection: 'column', alignItems: 'stretch',
+      minHeight: '0', overflow: 'hidden',
+    })
+  }
+  if (SEEDED_HEIGHT_STAGES.has(node.comfyClass)) {
+    Object.assign(container.style, {
+      flex: 'none', height: `${floor}px`, resize: 'vertical', overflow: 'hidden',
     })
   }
 
@@ -115,7 +151,8 @@ function mountStage(node: ComfyNode, kind: StageKind, variant: StageVariant = 'g
 
   installTextPreviewCap(node)
 
-  const { state, onRunRequest, onCancelRequest, onDisconnect, onAction } = useStageNode(node, kind, variant)
+  const { state, onRunRequest, onCancelRequest, onDisconnect, onAction, registerPreRun } = useStageNode(node, kind, variant)
+  ;(node as any).__comfytvStageApi = { state, onRunRequest, onCancelRequest, registerPreRun, variant }
 
   const Card = RICH_STAGE_CARDS[node.comfyClass] ?? StageCard
   const props: any = {
@@ -127,6 +164,7 @@ function mountStage(node: ComfyNode, kind: StageKind, variant: StageVariant = 'g
   registerMount(mountKey, container, Card, props)
 
   node.onRemoved = useChainCallback(node.onRemoved, () => {
+    delete (node as any).__comfytvStageApi
     unregisterMount(mountKey)
   })
 }
@@ -180,6 +218,8 @@ function mountProjectStage(node: ComfyNode) {
 const extension: ComfyExtension = {
   name: 'ComfyTV',
 
+  topbarBadges: [execTopbarBadge, collabTopbarBadge],
+
   commands: [
     {
       id: 'ComfyTV.openEntryManager',
@@ -195,12 +235,6 @@ const extension: ComfyExtension = {
   ],
 
   setup() {
-    if (isHeadlessConvertMode()) {
-      console.info('[ComfyTV] headless convert mode 鈥?UI init skipped')
-      runHeadlessConvertWorker()
-      return
-    }
-
     checkThemeTokens()
     const selection = useSelectionStore()
     const a = app as any
@@ -212,6 +246,25 @@ const extension: ComfyExtension = {
       toast: (opts) => a.extensionManager?.toast?.add?.(opts),
       t: (key, params) => i18n.global.t(key, params ?? {}),
     })
+
+    installCanvasMirror(a, {
+      resolveApp: () => a,
+      resolveProjectId: () => useProjectStore(pinia).currentProjectId,
+      resolveStageState: (node) => useStageStore(pinia).getStage(node),
+    })
+
+    installMcpCommandBus(a, {
+      resolveApp: () => a,
+      resolveProjectId: () => useProjectStore(pinia).currentProjectId,
+    })
+
+    installCollabPresence(a, {
+      resolveProjectId: () => useProjectStore(pinia).currentProjectId,
+      resolveApp: () => a,
+      resolveStageState: (node) => useStageStore(pinia).getStage(node),
+    })
+
+    installExecBadge()
 
     try {
       const ComfyButton = (window as any).comfyAPI?.button?.ComfyButton
@@ -237,6 +290,8 @@ const extension: ComfyExtension = {
     }
 
     useEntryStore().installWebSocketSync()
+    installWorkflowRegistrySync(a)
+    installAppModeHint(a)
 
     try {
       a.api?.addEventListener?.('comfytv-toast', (event: any) => {
@@ -271,6 +326,10 @@ const extension: ComfyExtension = {
       id:      'comfytv-workflow-config',
       title:   'ComfyTV',
       icon:    'pi pi-sliders-h',
+      iconBadge: () => {
+        const count = usePresenceStore(pinia).peerCount
+        return count > 0 ? String(count) : null
+      },
       tooltip: i18n.global.t('menu.configSidebarTooltip'),
       type:    'custom',
       render: (container: HTMLElement) => {
@@ -289,6 +348,12 @@ const extension: ComfyExtension = {
         sidebarApp?.unmount()
         sidebarApp = null
       },
+    })
+
+    const botStore = useBotStore(pinia)
+    botStore.installWebSocketSync()
+    void botStore.refreshStatus().then(() => {
+      syncBotTab(a, botStore.enabled)
     })
   },
 
@@ -335,6 +400,24 @@ const extension: ComfyExtension = {
       const mainPrompt = getWidget(node, 'main_prompt')
       if (mainPrompt && !mainPrompt.value && typeof legacy?.value === 'string' && legacy.value) {
         mainPrompt.value = legacy.value
+      }
+    }
+
+    await v2Ready
+    if (isV2Enabled()) {
+      const shell = V2_SHELLS[node.comfyClass]
+      if (shell) {
+        const variant = (entry.variant ?? 'generator') as StageVariant
+        const { state, onRunRequest, onCancelRequest, registerPreRun } =
+          shell(node, entry.kind, variant)
+        Object.assign(
+          ((node as any).__comfytvStageApi ??= {}),
+          { state, onRunRequest, onCancelRequest, registerPreRun, variant },
+        )
+        node.onRemoved = useChainCallback(node.onRemoved, () => {
+          delete (node as any).__comfytvStageApi
+        })
+        return
       }
     }
 

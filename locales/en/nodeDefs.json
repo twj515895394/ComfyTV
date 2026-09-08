@@ -6,8 +6,14 @@
     "AssetImageLoaderStage": {
       "display_name": "Load Image from Asset"
     },
+    "AssetTextLoaderStage": {
+      "display_name": "Load Text from Asset"
+    },
     "AssetVideoLoaderStage": {
       "display_name": "Load Video from Asset"
+    },
+    "AudioClipStage": {
+      "display_name": "Audio Trim"
     },
     "AudioExtractBgStage": {
       "display_name": "Audio · Background Only"
@@ -20,6 +26,9 @@
     },
     "AudioStage": {
       "display_name": "Music Stage"
+    },
+    "AudioSplitStage": {
+      "display_name": "Audio Split"
     },
     "AudioVideoDemuxAudioStage": {
       "display_name": "Demux · Audio Track"
@@ -520,6 +529,15 @@
       }
     }
   },
+  "ComfyTV_AssetTextLoaderStage": {
+    "display_name": "Load Text from Asset",
+    "inputs": {},
+    "outputs": {
+      "0": {
+        "name": "Text"
+      }
+    }
+  },
   "ComfyTV_AssetVideoLoaderStage": {
     "display_name": "Load Video from Asset",
     "inputs": {},
@@ -989,6 +1007,9 @@
   "ComfyTV_ImagePickerStage": {
     "display_name": "Image Picker",
     "inputs": {
+      "append_results": {
+        "name": "Append results"
+      },
       "batch": {
         "name": "Batch"
       },
@@ -1639,6 +1660,25 @@
       }
     }
   },
+  "ComfyTV_AudioClipStage": {
+    "display_name": "Audio Trim",
+    "outputs": {
+      "0": {
+        "name": "Audio"
+      }
+    }
+  },
+  "ComfyTV_AudioSplitStage": {
+    "display_name": "Audio Split",
+    "outputs": {
+      "0": {
+        "name": "Audio A"
+      },
+      "1": {
+        "name": "Audio B"
+      }
+    }
+  },
   "ComfyTV_VideoVolumeStage": {
     "display_name": "Video Volume"
   },
@@ -1877,6 +1917,9 @@
   "ComfyTV_AudioPickerStage": {
     "display_name": "Audio Picker",
     "inputs": {
+      "append_results": {
+        "name": "Append results"
+      },
       "batch": {
         "name": "Batch"
       },
@@ -1896,6 +1939,9 @@
   "ComfyTV_VideoPickerStage": {
     "display_name": "Video Picker",
     "inputs": {
+      "append_results": {
+        "name": "Append results"
+      },
       "batch": {
         "name": "Batch"
       },

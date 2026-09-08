@@ -1,9 +1,10 @@
 import { onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { importWorkflow, listWorkflowOverview, rescanWorkflows, setDefaultWorkflow } from '@/api'
+import { importWorkflow, listWorkflowOverview, rescanWorkflows, setDefaultWorkflow, setHiddenWorkflow } from '@/api'
 import type { WorkflowOverview } from '@/api'
-import { addOptionEverywhere } from '@/composables/stages/workflowCombo'
+import { addOptionEverywhere, removeOptionEverywhere, setDefaultOptionInDefs } from '@/composables/stages/workflowCombo'
+import { tryOpenWorkflowInComfy } from '@/composables/useOpenInComfy'
 import { app } from '@/lib/comfyApp'
 import { WORKFLOW_API_GENERATED } from '@/utils/workflowEvents'
 import type { WorkflowApiGeneratedDetail } from '@/utils/workflowEvents'
@@ -29,6 +30,8 @@ export function useStageWorkflowList(
   const importBusy = ref(false)
   const rescanBusy = ref(false)
   const defaultBusyId = ref<number | null>(null)
+  const hiddenBusyId = ref<number | null>(null)
+  const openBusyId = ref<number | null>(null)
   const recentAdded = ref<Set<string>>(new Set())
 
   async function reload() {
@@ -76,13 +79,38 @@ export function useStageWorkflowList(
     try {
       await setDefaultWorkflow(row.id, isDefault)
       for (const r of rows.value) r.is_default = isDefault && r.id === row.id
-      void (app as any)?.refreshComboInNodes?.()
+      setDefaultOptionInDefs(row.kind, isDefault ? row.label : null)
       if (isDefault) toast('success', t('stageManager.defaultSet', { label: row.label }))
       else toast('info', t('stageManager.defaultCleared', { label: row.label }))
     } catch (e: any) {
       toast('error', t('stageManager.defaultFailed'), String(e?.message || e))
     } finally {
       defaultBusyId.value = null
+    }
+  }
+
+  async function onSetHidden(row: WorkflowOverview, hidden: boolean) {
+    hiddenBusyId.value = row.id
+    try {
+      await setHiddenWorkflow(row.id, hidden)
+      row.is_hidden = hidden
+      if (hidden) removeOptionEverywhere(row.kind, row.label, false)
+      else addOptionEverywhere(row.kind, row.label)
+      if (hidden) toast('info', t('stageManager.hiddenSet', { label: row.label }))
+      else toast('success', t('stageManager.hiddenCleared', { label: row.label }))
+    } catch (e: any) {
+      toast('error', t('stageManager.hiddenFailed'), String(e?.message || e))
+    } finally {
+      hiddenBusyId.value = null
+    }
+  }
+
+  async function onOpenInComfy(row: WorkflowOverview) {
+    openBusyId.value = row.id
+    try {
+      await tryOpenWorkflowInComfy(row)
+    } finally {
+      openBusyId.value = null
     }
   }
 
@@ -140,11 +168,15 @@ export function useStageWorkflowList(
     importBusy,
     rescanBusy,
     defaultBusyId,
+    hiddenBusyId,
+    openBusyId,
     recentAdded,
     reload,
     onRescan,
     onImport,
     onSetDefault,
+    onSetHidden,
+    onOpenInComfy,
     importFile,
   }
 }

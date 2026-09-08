@@ -27,8 +27,27 @@ async def get_latest_output(request: web.Request) -> web.Response:
     stage_node_id = request.query.get("stage_node_id")
     if not stage_node_id:
         return web.json_response({"error": "stage_uid or stage_node_id is required"}, status=400)
-    row = storage.latest_output(pid, stage_node_id)
+    row = storage.latest_output(
+        pid, stage_node_id, stage_class=request.query.get("stage_class") or None)
     return web.json_response({"output": row})
+
+
+@routes.post("/comfytv/projects/{pid}/outputs/latest_batch")
+async def get_latest_outputs_batch(request: web.Request) -> web.Response:
+    pid = request.match_info["pid"]
+    try:
+        body = await request.json()
+    except Exception:
+        return web.json_response({"error": "invalid JSON body"}, status=400)
+    raw = body.get("items")
+    if not isinstance(raw, list) or len(raw) > 500:
+        return web.json_response({"error": "items must be a list of <=500"}, status=400)
+    items = [
+        (str(it.get("stage_uid") or ""), str(it.get("output_type") or "") or None)
+        for it in raw if isinstance(it, dict)
+    ]
+    rows = storage.latest_outputs_by_uids(pid, items)
+    return web.json_response({"outputs": rows})
 
 
 @routes.post("/comfytv/projects/{pid}/outputs/adopt")
@@ -46,9 +65,16 @@ async def adopt_outputs(request: web.Request) -> web.Response:
         return web.json_response(
             {"error": "stage_node_id, stage_class and stage_uid are required"}, status=400
         )
+    since = body.get("since")
+    if since not in (None, "") and storage.parse_output_since(since) is None:
+        return web.json_response(
+            {"error": "since must be an ISO timestamp (when this stage claimed its uid)"},
+            status=400,
+        )
     row = storage.adopt_outputs(
         pid, str(stage_node_id), str(stage_class), str(stage_uid),
         output_type=str(output_type) if output_type else None,
+        since=since,
     )
     return web.json_response({"output": row})
 

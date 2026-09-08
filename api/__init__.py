@@ -17,8 +17,21 @@ from . import fx_preview  # noqa: F401
 from . import expression_eval  # noqa: F401
 from . import score_editor  # noqa: F401
 from . import proxies    # noqa: F401
+from . import thumbs     # noqa: F401
+from . import media_info  # noqa: F401
 from . import midi       # noqa: F401
 from . import poster     # noqa: F401
 from . import settings   # noqa: F401
+from . import skills     # noqa: F401
+from . import canvas_state  # noqa: F401
+from . import collab     # noqa: F401
+from . import exec_errors   # noqa: F401
+from . import mcp        # noqa: F401
+from . import mcp_commands  # noqa: F401
+from . import prompt_lint   # noqa: F401
+from . import bot        # noqa: F401
+from . import eagle      # noqa: F401
+from . import blender    # noqa: F401
+from . import llm        # noqa: F401
 
 from .stages import _compute_input_usage  # noqa: F401

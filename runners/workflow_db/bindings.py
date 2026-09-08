@@ -242,6 +242,21 @@ def set_default_workflow(workflow_id: int, default: bool) -> Optional[dict]:
     return result
 
 
+def set_hidden_workflow(workflow_id: int, hidden: bool) -> Optional[dict]:
+    db.init()
+    with db.get_session() as s:
+        row = s.get(db.Workflow, workflow_id)
+        if row is None:
+            return None
+        row.is_hidden = hidden
+        s.commit()
+        result = {"ok": True, "kind": row.kind, "label": row.label,
+                  "is_hidden": row.is_hidden}
+    _log.info("[ComfyTV/workflow_db] %s %s/%s",
+              "hid" if hidden else "unhid", result["kind"], result["label"])
+    return result
+
+
 def get_default_label(kind: str) -> Optional[str]:
     db.init()
     with db.get_session() as s:
@@ -293,6 +308,7 @@ def list_workflows() -> list[dict]:
                 "order": r.order_,
                 "description": r.description,
                 "link_type": getattr(r, "link_type", db.LINK_TYPE_MANAGED) or db.LINK_TYPE_MANAGED,
+                "hidden": bool(getattr(r, "is_hidden", False)),
             }
             for r in rows
         ]
@@ -356,6 +372,7 @@ def list_workflows_overview(kind: Optional[str] = None) -> list[dict]:
                 "has_api":     bool(r.api_json),
                 "gui_valid":   _gui_valid_for(path) if path else None,
                 "is_default":  bool(getattr(r, "is_default", False)),
+                "is_hidden":   bool(getattr(r, "is_hidden", False)),
             })
         return out
 

@@ -19,6 +19,37 @@ def _stage_name(cls) -> str:
     return name[:-5] if name.endswith('Clone') else name
 
 
+def _pnginfo_uid(cls, node_id):
+    """The stage's uid straight from the queued prompt's workflow (node.properties)."""
+    if node_id is None:
+        return None
+    info = getattr(getattr(cls, "hidden", None), "extra_pnginfo", None)
+    workflow = info.get("workflow") if isinstance(info, dict) else None
+    nodes = workflow.get("nodes") if isinstance(workflow, dict) else None
+    for n in nodes or []:
+        if str(n.get("id")) == str(node_id):
+            uid = (n.get("properties") or {}).get("comfytv_stage_uid")
+            return str(uid) if uid else None
+    return None
+
+
+def _mirror_uid(project_id: str, node_id, stage_class: str):
+    if node_id is None:
+        return None
+    try:
+        from ....api.canvas_state import get_canvas_state
+        snap = get_canvas_state(project_id or None)
+    except Exception:
+        return None
+    if not snap.get("available"):
+        return None
+    for st in snap.get("stages") or []:
+        if str(st.get("graph_node_id")) == str(node_id) \
+                and str(st.get("stage_class") or "") == stage_class:
+            return str(st.get("uid") or "") or None
+    return None
+
+
 def _persist(
     *,
     cls,
@@ -31,12 +62,18 @@ def _persist(
     picked_index=None,
     duration_ms=None,
 ):
+    from .provenance import consume_last_provenance
+    provenance = consume_last_provenance()
+    if params is None:
+        params = provenance
     try:
         node_id = getattr(cls.hidden, "unique_id", None) if hasattr(cls, "hidden") else None
         row = _storage_module.persist_output(
             project_id=project_id or "",
             stage_class=_stage_name(cls),
             stage_node_id=str(node_id) if node_id is not None else None,
+            stage_uid=(_pnginfo_uid(cls, node_id)
+                       or _mirror_uid(project_id or "", node_id, _stage_name(cls))),
             output_type=output_type,
             payload_url=payload_url,
             payload_json=payload_json,
@@ -45,6 +82,18 @@ def _persist(
             picked_index=int(picked_index) if picked_index is not None else None,
             duration_ms=int(duration_ms) if duration_ms is not None else None,
         )
+        try:
+            from ....runners import eagle as _eagle
+            _eagle.auto_send_output(
+                payload_url=payload_url,
+                output_type=output_type,
+                project_id=project_id or "",
+                stage_class=_stage_name(cls),
+                params=params,
+                payload_json=payload_json,
+            )
+        except Exception:
+            logging.debug("[ComfyTV] eagle auto-send skipped", exc_info=True)
         return row.get('id') if row else None
     except Exception as e:
         logging.warning("[ComfyTV] persist_output failed for %s: %s", cls.__name__, e)

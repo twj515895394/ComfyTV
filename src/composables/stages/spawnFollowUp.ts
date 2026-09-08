@@ -1,10 +1,12 @@
 import { IMAGE_VARIANT_PRESETS, type ImagePreset } from '@/composables/stages/imagePresets'
 import { IMAGE_EDIT_PRESETS } from '@/composables/stages/imageEditPresets'
 import { VIDEO_CHANGE_PRESETS } from '@/composables/stages/videoChangePresets'
+import { AUDIO_CHANGE_PRESETS } from '@/composables/stages/audioChangePresets'
 import { useStageStore, type StageKind, type ImagePickContext } from '@/stores/stageStore'
 import { useAssetStore } from '@/stores/assetStore'
 import { createAssetLoaderNode } from '@/composables/stages/assetLoaderNode'
 import { app } from '@/lib/comfyApp'
+import { findFreePos } from '@/composables/stages/placeFree'
 
 const STAGE_CLASS_BY_KIND: Record<StageKind, string> = {
   text:           'ComfyTV.TextStage',
@@ -38,7 +40,7 @@ const TARGET_GROUP_BY_KIND: Record<StageKind, 'texts' | 'images' | 'videos' | 'm
   material:       'images',
 }
 
-function findFirstAutogrowSlot(node: any, groupPrefix: string): number {
+export function findFirstAutogrowSlot(node: any, groupPrefix: string): number {
   if (!node.inputs) return -1
   for (let i = 0; i < node.inputs.length; i++) {
     const n = String(node.inputs[i].name || '')
@@ -47,7 +49,7 @@ function findFirstAutogrowSlot(node: any, groupPrefix: string): number {
   return -1
 }
 
-function findNamedSlot(node: any, name: string): number {
+export function findNamedSlot(node: any, name: string): number {
   if (!node.inputs) return -1
   for (let i = 0; i < node.inputs.length; i++) {
     if (String(node.inputs[i].name || '') === name) return i
@@ -60,7 +62,7 @@ export function outputHasLinks(node: any, idx: number): boolean {
   return !!(out?.links && out.links.length > 0)
 }
 
-function createNodeAt(targetClass: string, pos: [number, number]): any | null {
+export function createNodeAt(targetClass: string, pos: [number, number]): any | null {
   const win = window as any
   if (!win.LiteGraph?.createNode) {
     console.error('[ComfyTV/action] LiteGraph.createNode not available')
@@ -71,8 +73,9 @@ function createNodeAt(targetClass: string, pos: [number, number]): any | null {
     console.error('[ComfyTV/action] createNode returned null for', targetClass)
     return null
   }
-  ;(app as any)?.graph?.add(node)
-  node.pos = pos
+  const graph = (app as any)?.graph
+  graph?.add(node)
+  node.pos = findFreePos(graph, pos, [node.size?.[0] || 280, node.size?.[1] || 260], node)
   return node
 }
 
@@ -290,6 +293,23 @@ const PRODUCT_SHOT_PRESET: ImagePreset = {
   },
 }
 
+const videoActionHandlers: Record<string, SpawnHandler> = {
+  'extend': src => spawnExtendVideo(src),
+  ...Object.fromEntries(
+    VIDEO_CHANGE_PRESETS.map(p => [
+      `change:${p.id}`,
+      (src: any) => spawnImagePreset(src, p),
+    ]),
+  ),
+}
+
+const audioActionHandlers: Record<string, SpawnHandler> = Object.fromEntries(
+  AUDIO_CHANGE_PRESETS.map(p => [
+    `change:${p.id}`,
+    (src: any) => spawnImagePreset(src, p),
+  ]),
+)
+
 const SPAWN_HANDLERS: Partial<Record<StageKind, Record<string, SpawnHandler>>> = {
   image: imageActionHandlers,
   'image-picker': imageActionHandlers,
@@ -297,15 +317,10 @@ const SPAWN_HANDLERS: Partial<Record<StageKind, Record<string, SpawnHandler>>> =
   model: {
     'product-shot': src => spawnImagePreset(src, PRODUCT_SHOT_PRESET, 1),
   },
-  video: {
-    'extend': src => spawnExtendVideo(src),
-    ...Object.fromEntries(
-      VIDEO_CHANGE_PRESETS.map(p => [
-        `change:${p.id}`,
-        (src: any) => spawnImagePreset(src, p),
-      ]),
-    ),
-  },
+  video: videoActionHandlers,
+  'video-picker': videoActionHandlers,
+  audio: audioActionHandlers,
+  'audio-picker': audioActionHandlers,
   panorama: {
     'view-current': src => spawnPanoramaView(src, 'current'),
     'view-four':    src => spawnPanoramaView(src, 'four'),

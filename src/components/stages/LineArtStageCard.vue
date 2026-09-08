@@ -35,6 +35,9 @@
       <div v-if="showResult && resultUrl"
            class="ctv-hover-reveal ctv:absolute ctv:top-1 ctv:right-1 ctv:z-10 ctv:flex ctv:gap-1">
         <button type="button" :class="downloadBtnClass"
+                :title="$t('stage.action.viewFull')"
+                @click.stop="openLightbox([{ url: assetUrl(resultUrl!) }])"><i class="pi pi-window-maximize" /></button>
+        <button type="button" :class="downloadBtnClass"
                 :title="$t('stage.action.download')"
                 @click.stop="onDownloadResult"><i class="pi pi-download" /></button>
         <button type="button" :class="tagBtnClass"
@@ -111,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import IconPenTool from '~icons/lucide/pen-tool'
 
@@ -121,6 +124,7 @@ import ModelPreview from '@/components/stages/ModelPreview.vue'
 import StageCard from '@/components/stages/StageCard.vue'
 import type { StageState } from '@/stores/stageStore'
 import { useLineArt } from '@/composables/stages/useLineArt'
+import { openLightbox } from '@/composables/useLightbox'
 
 const props = defineProps<{
   state: StageState
@@ -145,8 +149,19 @@ const {
 
 const previewEl = ref<InstanceType<typeof ModelPreview> | null>(null)
 
-function onRun(): void {
+function writeCameraNow(): void {
   writeCamera(previewEl.value?.cameraState() ?? null)
+}
+
+let unregisterPreRun: (() => void) | null = null
+onMounted(() => {
+  unregisterPreRun =
+    (props.node as any).__comfytvStageApi?.registerPreRun?.(writeCameraNow) ?? null
+})
+onUnmounted(() => { unregisterPreRun?.() })
+
+function onRun(): void {
+  if (!unregisterPreRun) writeCameraNow()
   props.onRunRequest()
 }
 

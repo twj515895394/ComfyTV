@@ -1,8 +1,8 @@
-import { computed, onBeforeUnmount, ref } from 'vue'
+﻿import { computed, onBeforeUnmount, ref } from 'vue'
 
 import { app, type LGraphNode } from '@/lib/comfyApp'
 import type { StageState } from '@/stores/stageStore'
-import { onNodeConfigure, readWidgetStr, writeWidget } from '@/utils/widget'
+import { bindWidgetCallback, onNodeConfigure, readWidgetStr, writeWidget } from '@/utils/widget'
 import {
   boardDurationMs,
   boardImageUrl,
@@ -124,6 +124,9 @@ export function useStoryboardEditor(node: LGraphNode, state: StageState, opts?: 
     restore()
     stopPlayback()
   })
+  bindWidgetCallback(node, STATE_WIDGET, (value) => {
+    if (typeof value === 'string' && value !== lastWritten) restore()
+  })
 
   const storage: LayerEditorStorage = {
     subfolder: SUBFOLDER,
@@ -174,6 +177,7 @@ export function useStoryboardEditor(node: LGraphNode, state: StageState, opts?: 
     if (uid === currentUid.value) return
     if (!doc.value.boards.some((b) => b.uid === uid)) return
     stopPlayback()
+    editor.flushPersist()
     editor.flushCapture()
     currentUid.value = uid
     editor.reload()
@@ -228,6 +232,7 @@ export function useStoryboardEditor(node: LGraphNode, state: StageState, opts?: 
   function duplicateBoard(uid: string): StoryBoardData | null {
     const idx = doc.value.boards.findIndex((b) => b.uid === uid)
     if (idx < 0) return null
+    editor.flushPersist()
     const copy = duplicateBoardData(doc.value.boards[idx])
     doc.value.boards.splice(idx + 1, 0, copy)
     commit()
@@ -352,6 +357,7 @@ export function useStoryboardEditor(node: LGraphNode, state: StageState, opts?: 
   /** Render the boards into an MP4 animatic on the backend (PyAV). */
   async function exportAnimatic(): Promise<string> {
     if (exportingAnimatic.value) return ''
+    editor.flushPersist()
     editor.flushCapture()
     exportingAnimatic.value = true
     try {
@@ -399,6 +405,7 @@ export function useStoryboardEditor(node: LGraphNode, state: StageState, opts?: 
   /** Render the boards into an animated GIF; returns its /view URL. */
   async function exportGif(): Promise<string> {
     if (exportingGif.value) return ''
+    editor.flushPersist()
     editor.flushCapture()
     exportingGif.value = true
     try {
@@ -469,6 +476,7 @@ export function useStoryboardEditor(node: LGraphNode, state: StageState, opts?: 
 
   function play(): void {
     if (playing.value || doc.value.boards.length === 0) return
+    editor.flushPersist()
     editor.flushCapture()
     playIndex.value = currentIndex.value
     playing.value = true

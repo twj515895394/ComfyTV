@@ -48,66 +48,100 @@
       />
     </div>
 
-    <div class="ctv-scroll-thin ctv:flex-1 ctv:min-h-0 ctv:max-h-80 ctv:overflow-y-auto ctv:rounded-md ctv:border ctv:border-border-subtle ctv:bg-black/20 ctv:p-1.5" @wheel.stop>
+    <div class="ctv:flex-1 ctv:min-h-0 ctv:rounded-md ctv:border ctv:border-border-subtle ctv:bg-black/20" @wheel.stop>
       <div v-if="visibleAssets.length === 0"
            class="ctv:py-5 ctv:px-1.5 ctv:text-center ctv:italic ctv:text-muted-foreground/60">
         {{ activeFilter === 'all' ? $t('assetLoader.empty') : $t('assets.emptyCategory') }}
       </div>
 
-      <div v-else ref="gridEl" class="ctv:grid ctv:grid-cols-[repeat(auto-fill,minmax(80px,1fr))] ctv:gap-1.5">
-        <button
-          v-for="asset in visibleAssets"
-          :key="asset.id"
-          type="button"
-          :class="[
-            'ctv:group ctv:relative ctv:rounded-lg ctv:overflow-hidden ctv:cursor-pointer ctv:p-0 ctv:border ctv:bg-secondary-background ctv:transition-colors',
-            asset.id === selectedId
-              ? 'ctv:border-primary-background ctv:ring-2 ctv:ring-primary-background/50'
-              : 'ctv:border-border-subtle ctv:hover:border-border-default',
-          ]"
-          :title="assetTooltip(asset)"
-          @click="selectAsset(asset)"
+      <div v-else ref="gridEl">
+        <VirtualGrid
+          :items="gridItems"
+          :grid-style="{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+            gap: '6px',
+          }"
+          :default-item-height="110"
+          :default-item-width="86"
+          class="ctv-scroll-thin ctv:max-h-80 ctv:p-1.5"
         >
-          <ProxiedVideo
-            v-if="mediaType === 'video'"
-            :src="asset.payload_url"
-            muted
-            playsinline
-            preload="metadata"
-            class="ctv:block ctv:w-full ctv:aspect-square ctv:object-cover ctv:bg-black"
-            @mouseenter="hoverPlay"
-            @mouseleave="hoverPause"
-          />
-          <div
-            v-else-if="mediaType === 'audio'"
-            class="ctv:flex ctv:items-center ctv:justify-center ctv:w-full ctv:aspect-square ctv:text-2xl
-                   ctv:bg-secondary-background-hover ctv:text-muted-foreground"
-          ><i class="pi pi-volume-up" /></div>
-          <div
-            v-else-if="mediaType === 'model'"
-            class="ctv:relative ctv:w-full ctv:aspect-square ctv:bg-secondary-background-hover"
-          >
-            <ModelThumb :src="asset.payload_url" :alt="asset.name">
-              <i class="pi pi-box ctv:text-2xl" />
-            </ModelThumb>
-          </div>
-          <img
-            v-else
-            :src="assetPreviewUrl(asset)"
-            :alt="asset.name"
-            loading="lazy"
-            class="ctv:block ctv:w-full ctv:aspect-square ctv:object-cover"
-            draggable="false"
-          />
-          <div class="ctv:truncate ctv:py-0.5 ctv:px-1 ctv:text-2xs ctv:text-left ctv:text-muted-foreground">
-            {{ asset.name || '—' }}
-          </div>
-          <span
-            v-if="asset.id === selectedId"
-            class="ctv:absolute ctv:top-1 ctv:right-1 ctv:flex ctv:items-center ctv:justify-center ctv:size-4 ctv:rounded-full
-                   ctv:bg-primary-background ctv:text-base-foreground ctv:text-3xs ctv:font-bold ctv:shadow"
-          ><i class="pi pi-check" /></span>
-        </button>
+          <template #item="{ item, index }">
+            <button
+              type="button"
+              :data-asset-id="item.asset.id"
+              :class="[
+                'ctv:group ctv-hover-host ctv:relative ctv:w-full ctv:rounded-lg ctv:overflow-hidden ctv:cursor-pointer ctv:p-0 ctv:border ctv:bg-secondary-background ctv:transition-colors',
+                item.asset.id === selectedId
+                  ? 'ctv:border-primary-background ctv:ring-2 ctv:ring-primary-background/50'
+                  : 'ctv:border-border-subtle ctv:hover:border-border-default',
+              ]"
+              :title="assetTooltip(item.asset)"
+              @click="selectAsset(item.asset)"
+            >
+              <div
+                v-if="mediaType === 'video'"
+                class="ctv:relative ctv:w-full ctv:aspect-square ctv:bg-black"
+              >
+                <ThumbImg
+                  :src="item.asset.payload_url"
+                  :thumb-max="THUMB_CELL"
+                  :alt="item.asset.name"
+                  loading="lazy"
+                  class="ctv:block ctv:size-full ctv:object-cover"
+                  draggable="false"
+                />
+                <i class="pi pi-play-circle ctv:absolute ctv:bottom-1 ctv:right-1 ctv:text-sm ctv:text-white/80 ctv:pointer-events-none ctv:drop-shadow" />
+              </div>
+              <div
+                v-else-if="mediaType === 'audio'"
+                class="ctv:flex ctv:items-center ctv:justify-center ctv:w-full ctv:aspect-square ctv:text-2xl
+                       ctv:bg-secondary-background-hover ctv:text-muted-foreground"
+              ><i class="pi pi-volume-up" /></div>
+              <div
+                v-else-if="mediaType === 'text'"
+                class="ctv:flex ctv:items-center ctv:justify-center ctv:w-full ctv:aspect-square ctv:text-2xl
+                       ctv:bg-secondary-background-hover ctv:text-muted-foreground"
+              ><i class="pi pi-file" /></div>
+              <div
+                v-else-if="mediaType === 'model'"
+                class="ctv:relative ctv:w-full ctv:aspect-square ctv:bg-secondary-background-hover"
+              >
+                <ModelThumb :src="item.asset.payload_url" :alt="item.asset.name">
+                  <i class="pi pi-box ctv:text-2xl" />
+                </ModelThumb>
+              </div>
+              <ThumbImg
+                v-else
+                :src="assetPreviewUrl(item.asset)"
+                :thumb-max="THUMB_CELL"
+                :alt="item.asset.name"
+                loading="lazy"
+                class="ctv:block ctv:w-full ctv:aspect-square ctv:object-cover"
+                draggable="false"
+              />
+              <div class="ctv:truncate ctv:py-0.5 ctv:px-1 ctv:text-2xs ctv:text-left ctv:text-muted-foreground">
+                <span
+                  v-if="item.asset.file_missing"
+                  class="ctv:text-destructive-background"
+                  :title="$t('assets.card.fileMissingHint')"
+                >⚠</span>
+                {{ item.asset.name || '—' }}
+              </div>
+              <span
+                v-if="item.asset.id === selectedId"
+                class="ctv:absolute ctv:top-1 ctv:right-1 ctv:flex ctv:items-center ctv:justify-center ctv:size-4 ctv:rounded-full
+                       ctv:bg-primary-background ctv:text-base-foreground ctv:text-3xs ctv:font-bold ctv:shadow"
+              ><i class="pi pi-check" /></span>
+              <ViewFullButton
+                v-if="mediaType === 'image'"
+                class="ctv:top-1 ctv:left-1"
+                :items="gridLightboxItems"
+                :index="index"
+              />
+            </button>
+          </template>
+        </VirtualGrid>
       </div>
     </div>
 
@@ -125,7 +159,13 @@
     </div>
 
     <div class="ctv:shrink-0 ctv:flex ctv:items-center ctv:gap-2 ctv:text-2xs ctv:text-muted-foreground">
-      <span v-if="selectedAsset" class="ctv:flex-1 ctv:truncate ctv:text-success-background">
+      <span
+        v-if="selectedAsset && selectedAsset.file_missing"
+        class="ctv:flex-1 ctv:truncate ctv:text-destructive-background"
+      >
+        {{ $t('assetLoader.fileMissing', { name: selectedAsset.name || '—' }) }}
+      </span>
+      <span v-else-if="selectedAsset" class="ctv:flex-1 ctv:truncate ctv:text-success-background">
         {{ $t('assetLoader.selected', { name: selectedAsset.name || '—' }) }}
       </span>
       <span v-else class="ctv:flex-1 ctv:truncate">{{ $t('assetLoader.pickHint') }}</span>
@@ -152,11 +192,15 @@ import { computed, nextTick, ref } from 'vue'
 
 import type { LGraphNode } from '@/lib/comfyApp'
 import ModelThumb from '@/components/widgets/ModelThumb.vue'
-import ProxiedVideo from '@/components/widgets/ProxiedVideo.vue'
 import StageCard from '@/components/stages/StageCard.vue'
+import ThumbImg from '@/components/widgets/ThumbImg.vue'
+import VirtualGrid from '@/components/widgets/VirtualGrid.vue'
 import ValuePreview from '@/components/stages/ValuePreview.vue'
+import ViewFullButton from '@/components/ViewFullButton.vue'
 import { assetTooltipOf as assetTooltip, useAssetLoaderCard } from '@/composables/stages/useAssetLoaderCard'
 import { assetPreviewUrl } from '@/utils/assetMedia'
+import { TEXT_FILE_EXTENSIONS } from '@/utils/mediaFileTypes'
+import { THUMB_CELL } from '@/utils/thumbUrl'
 import type { StageState } from '@/stores/stageStore'
 import { MODEL_FILE_EXTENSIONS } from '@/widgets/three/modelFormats'
 
@@ -198,10 +242,16 @@ function onNavKeydown(e: KeyboardEvent) {
   const moved = selectRelative(e.key === 'ArrowRight' ? 1 : -1)
   if (!moved) return
   void nextTick(() => {
-    const idx = visibleAssets.value.findIndex(a => a.id === moved.id)
-    gridEl.value?.children[idx]?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    gridEl.value?.querySelector(`[data-asset-id="${moved.id}"]`)
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   })
 }
+
+const gridItems = computed(() =>
+  visibleAssets.value.map((a) => ({ key: a.id, asset: a })))
+
+const gridLightboxItems = computed(() =>
+  visibleAssets.value.map((a) => ({ url: a.payload_url, label: a.name })))
 
 const fileInput = ref<HTMLInputElement | null>(null)
 
@@ -212,22 +262,15 @@ const previewContent = computed(() => {
 })
 
 const fileAccept = computed(() =>
-  mediaType.value === 'model' ? MODEL_FILE_EXTENSIONS.join(',') : `${mediaType.value}/*`)
+  mediaType.value === 'model' ? MODEL_FILE_EXTENSIONS.join(',')
+  : mediaType.value === 'text' ? TEXT_FILE_EXTENSIONS.join(',')
+  : `${mediaType.value}/*`)
 
 function onPickFiles(e: Event) {
   const input = e.target as HTMLInputElement
   const files = Array.from(input.files ?? [])
   input.value = ''
   if (files.length) void importFiles(files)
-}
-
-function hoverPlay(e: MouseEvent) {
-  void (e.currentTarget as HTMLVideoElement).play().catch(() => {})
-}
-function hoverPause(e: MouseEvent) {
-  const v = e.currentTarget as HTMLVideoElement
-  v.pause()
-  v.currentTime = 0
 }
 
 function chipClass(active: boolean) {

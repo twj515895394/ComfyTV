@@ -7,16 +7,27 @@ const listWorkflowOverview = vi.fn()
 const rescanWorkflows = vi.fn()
 const importWorkflow = vi.fn()
 const setDefaultWorkflow = vi.fn()
+const setHiddenWorkflow = vi.fn()
 vi.mock('@/api', () => ({
   listWorkflowOverview: (...a: any[]) => listWorkflowOverview(...a),
   rescanWorkflows: (...a: any[]) => rescanWorkflows(...a),
   importWorkflow: (...a: any[]) => importWorkflow(...a),
   setDefaultWorkflow: (...a: any[]) => setDefaultWorkflow(...a),
+  setHiddenWorkflow: (...a: any[]) => setHiddenWorkflow(...a),
 }))
 
 const addOptionEverywhere = vi.fn()
+const removeOptionEverywhere = vi.fn()
+const setDefaultOptionInDefs = vi.fn()
 vi.mock('@/composables/stages/workflowCombo', () => ({
   addOptionEverywhere: (...a: any[]) => addOptionEverywhere(...a),
+  removeOptionEverywhere: (...a: any[]) => removeOptionEverywhere(...a),
+  setDefaultOptionInDefs: (...a: any[]) => setDefaultOptionInDefs(...a),
+}))
+
+const tryOpenWorkflowInComfy = vi.fn(async (..._a: any[]) => true)
+vi.mock('@/composables/useOpenInComfy', () => ({
+  tryOpenWorkflowInComfy: (...a: any[]) => tryOpenWorkflowInComfy(...a),
 }))
 
 vi.mock('vue-i18n', () => ({
@@ -197,8 +208,8 @@ describe('useStageWorkflowList', () => {
   it('onSetDefault marks the row, clears others, and toasts', async () => {
     listWorkflowOverview.mockResolvedValue(overview({
       workflows: [
-        { id: 1, label: 'A', has_api: false, is_default: true },
-        { id: 2, label: 'B', has_api: false, is_default: false },
+        { id: 1, kind: 'image', label: 'A', has_api: false, is_default: true },
+        { id: 2, kind: 'image', label: 'B', has_api: false, is_default: false },
       ],
     }))
     setDefaultWorkflow.mockResolvedValue({ ok: true, kind: 'image', label: 'B', is_default: true })
@@ -206,6 +217,7 @@ describe('useStageWorkflowList', () => {
     await flush()
     await list.onSetDefault(list.rows.value[1] as any, true)
     expect(setDefaultWorkflow).toHaveBeenCalledWith(2, true)
+    expect(setDefaultOptionInDefs).toHaveBeenCalledWith('image', 'B')
     expect(list.rows.value.map(r => r.is_default)).toEqual([false, true])
     expect(toastAdd).toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }))
     expect(list.defaultBusyId.value).toBe(null)
@@ -213,13 +225,14 @@ describe('useStageWorkflowList', () => {
 
   it('onSetDefault(false) clears the default and toasts info', async () => {
     listWorkflowOverview.mockResolvedValue(overview({
-      workflows: [{ id: 1, label: 'A', has_api: false, is_default: true }],
+      workflows: [{ id: 1, kind: 'image', label: 'A', has_api: false, is_default: true }],
     }))
     setDefaultWorkflow.mockResolvedValue({ ok: true, kind: 'image', label: 'A', is_default: false })
     const list = withSetup(() => useStageWorkflowList(ref('image'), () => false, vi.fn()))
     await flush()
     await list.onSetDefault(list.rows.value[0] as any, false)
     expect(setDefaultWorkflow).toHaveBeenCalledWith(1, false)
+    expect(setDefaultOptionInDefs).toHaveBeenCalledWith('image', null)
     expect(list.rows.value[0].is_default).toBe(false)
     expect(toastAdd).toHaveBeenCalledWith(expect.objectContaining({ severity: 'info' }))
   })
@@ -235,6 +248,57 @@ describe('useStageWorkflowList', () => {
       detail: 'nope',
     }))
     expect(list.defaultBusyId.value).toBe(null)
+  })
+
+  it('onSetHidden hides the row without reassigning combo values', async () => {
+    listWorkflowOverview.mockResolvedValue(overview({
+      workflows: [{ id: 1, kind: 'image', label: 'A', has_api: false, is_hidden: false }],
+    }))
+    setHiddenWorkflow.mockResolvedValue({ ok: true, kind: 'image', label: 'A', is_hidden: true })
+    const list = withSetup(() => useStageWorkflowList(ref('image'), () => false, vi.fn()))
+    await flush()
+    await list.onSetHidden(list.rows.value[0] as any, true)
+    expect(setHiddenWorkflow).toHaveBeenCalledWith(1, true)
+    expect(list.rows.value[0].is_hidden).toBe(true)
+    expect(removeOptionEverywhere).toHaveBeenCalledWith('image', 'A', false)
+    expect(toastAdd).toHaveBeenCalledWith(expect.objectContaining({ severity: 'info' }))
+    expect(list.hiddenBusyId.value).toBe(null)
+  })
+
+  it('onSetHidden(false) restores the combo option and toasts success', async () => {
+    listWorkflowOverview.mockResolvedValue(overview({
+      workflows: [{ id: 1, kind: 'image', label: 'A', has_api: false, is_hidden: true }],
+    }))
+    setHiddenWorkflow.mockResolvedValue({ ok: true, kind: 'image', label: 'A', is_hidden: false })
+    const list = withSetup(() => useStageWorkflowList(ref('image'), () => false, vi.fn()))
+    await flush()
+    await list.onSetHidden(list.rows.value[0] as any, false)
+    expect(setHiddenWorkflow).toHaveBeenCalledWith(1, false)
+    expect(list.rows.value[0].is_hidden).toBe(false)
+    expect(addOptionEverywhere).toHaveBeenCalledWith('image', 'A')
+    expect(toastAdd).toHaveBeenCalledWith(expect.objectContaining({ severity: 'success' }))
+  })
+
+  it('onSetHidden failure toasts an error and leaves the row untouched', async () => {
+    setHiddenWorkflow.mockRejectedValue(new Error('nope'))
+    const list = withSetup(() => useStageWorkflowList(ref('image'), () => false, vi.fn()))
+    await flush()
+    await list.onSetHidden(list.rows.value[0] as any, true)
+    expect(list.rows.value[0].is_hidden).toBeUndefined()
+    expect(removeOptionEverywhere).not.toHaveBeenCalled()
+    expect(toastAdd).toHaveBeenCalledWith(expect.objectContaining({
+      severity: 'error',
+      detail: 'nope',
+    }))
+    expect(list.hiddenBusyId.value).toBe(null)
+  })
+
+  it('onOpenInComfy forwards the row and clears the busy id', async () => {
+    const list = withSetup(() => useStageWorkflowList(ref('image'), () => false, vi.fn()))
+    await flush()
+    await list.onOpenInComfy(list.rows.value[0])
+    expect(tryOpenWorkflowInComfy).toHaveBeenCalledWith(list.rows.value[0])
+    expect(list.openBusyId.value).toBe(null)
   })
 
   it('marks the matching row when its API sidecar is generated', async () => {

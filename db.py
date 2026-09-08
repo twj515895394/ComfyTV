@@ -60,6 +60,8 @@ class Workflow(Base):
                                               server_default="0")
     is_default:   Mapped[bool] = mapped_column(Boolean, default=False,
                                                server_default="0")
+    is_hidden:    Mapped[bool] = mapped_column(Boolean, default=False,
+                                               server_default="0")
     file_mtime:   Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     api_json:     Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     order_:       Mapped[int] = mapped_column("order", Integer, default=100)
@@ -211,6 +213,14 @@ class ProxyMedia(Base):
     updated_at:   Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
 
+class CollabDoc(Base):
+    __tablename__ = "comfytv_collab_docs"
+
+    project_id: Mapped[str] = mapped_column(String, primary_key=True)
+    state:      Mapped[str] = mapped_column(Text, default="{}")
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
+
+
 class ComfyServer(Base):
     __tablename__ = "comfytv_servers"
 
@@ -242,6 +252,52 @@ class RemoteJob(Base):
     )
     created_at:       Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at:       Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
+
+
+class BotChat(Base):
+    __tablename__ = "comfytv_bot_chats"
+
+    id:           Mapped[str] = mapped_column(String, primary_key=True)
+    title:        Mapped[str] = mapped_column(String, default="")
+    provider:     Mapped[str] = mapped_column(String, default="claude-code")
+    resume_token: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    run_mode:     Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    prefs_json:   Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    pinned:       Mapped[bool] = mapped_column(Boolean, default=False)
+    archived:     Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at:   Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_at:   Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
+
+
+class BotMessage(Base):
+    __tablename__ = "comfytv_bot_messages"
+
+    id:                 Mapped[str] = mapped_column(String, primary_key=True)
+    chat_id:            Mapped[str] = mapped_column(
+        String, ForeignKey("comfytv_bot_chats.id", ondelete="CASCADE"), index=True
+    )
+    parent_id:          Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    role:               Mapped[str] = mapped_column(String, default="user")
+    content:            Mapped[str] = mapped_column(Text, default="[]")
+    status:             Mapped[str] = mapped_column(String, default="done")
+    resume_token_after: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    usage_json:         Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at:         Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class EaglePending(Base):
+    __tablename__ = "comfytv_eagle_pending"
+
+    id:          Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    payload_url: Mapped[str] = mapped_column(Text, default="")
+    name:        Mapped[str] = mapped_column(String, default="")
+    tags_json:   Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    annotation:  Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    folder:      Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    status:      Mapped[str] = mapped_column(String, default="pending", index=True)
+    error:       Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created_at:  Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_at:  Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
 
 class Setting(Base):
@@ -347,6 +403,36 @@ def _migrate_additive_columns(engine) -> None:
                 ))
             logging.info("[ComfyTV] migrated: comfytv_outputs + duration_ms")
 
+        bot_msg_cols = {c["name"] for c in insp.get_columns("comfytv_bot_messages")}
+        if "usage_json" not in bot_msg_cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE comfytv_bot_messages ADD COLUMN usage_json TEXT"
+                ))
+            logging.info("[ComfyTV] migrated: comfytv_bot_messages + usage_json")
+
+        bot_chat_cols = {c["name"] for c in insp.get_columns("comfytv_bot_chats")}
+        if "run_mode" not in bot_chat_cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE comfytv_bot_chats ADD COLUMN run_mode VARCHAR"
+                ))
+            logging.info("[ComfyTV] migrated: comfytv_bot_chats + run_mode")
+        if "prefs_json" not in bot_chat_cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE comfytv_bot_chats ADD COLUMN prefs_json TEXT"
+                ))
+            logging.info("[ComfyTV] migrated: comfytv_bot_chats + prefs_json")
+
+        eagle_cols = {c["name"] for c in insp.get_columns("comfytv_eagle_pending")}
+        if "folder" not in eagle_cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE comfytv_eagle_pending ADD COLUMN folder VARCHAR"
+                ))
+            logging.info("[ComfyTV] migrated: comfytv_eagle_pending + folder")
+
         wf_cols = {c["name"] for c in insp.get_columns("comfytv_workflows")}
         if "link_type" not in wf_cols:
             with engine.begin() as conn:
@@ -362,6 +448,13 @@ def _migrate_additive_columns(engine) -> None:
                     "NOT NULL DEFAULT 0"
                 ))
             logging.info("[ComfyTV] migrated: comfytv_workflows + is_default")
+        if "is_hidden" not in wf_cols:
+            with engine.begin() as conn:
+                conn.execute(text(
+                    "ALTER TABLE comfytv_workflows ADD COLUMN is_hidden BOOLEAN "
+                    "NOT NULL DEFAULT 0"
+                ))
+            logging.info("[ComfyTV] migrated: comfytv_workflows + is_hidden")
         if "meta_json" not in wf_cols:
             with engine.begin() as conn:
                 conn.execute(text(

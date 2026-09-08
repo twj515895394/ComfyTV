@@ -20,6 +20,15 @@ function copyNodeDocs() {
 }
 
 export default defineConfig({
+  base: './',
+  worker: {
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name]-[hash].mjs',
+        chunkFileNames: 'assets/[name]-[hash].mjs'
+      }
+    }
+  },
   plugins: [
     vue(),
     tailwindcss(),

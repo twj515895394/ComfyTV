@@ -1,5 +1,6 @@
 import type { z } from 'zod'
 
+import { AssetEnvelopeSchema, type Asset } from './schemas/asset'
 import { app } from '@/lib/comfyApp'
 
 import {
@@ -16,10 +17,16 @@ import {
   LinkWorkflowResultSchema,
   ListNativeWorkflowsSchema,
   ListRemoteJobsSchema,
+  ImportSkillSchema,
   ListResourcesSchema,
+  ListRemoteNativeWorkflowsSchema,
+  ListSkillsSchema,
   ListServerStatusSchema,
   ListServersSchema,
   ListStagePresetsSchema,
+  MediaInfoSchema,
+  MediaInfoBatchSchema,
+  LatestOutputsBatchSchema,
   ListWorkflowOverviewSchema,
   MutateResourceSchema,
   MutateServerSchema,
@@ -28,10 +35,12 @@ import {
   MidiEventsSchema,
   OkSchema,
   ProxyEnsureSchema,
+  PullWorkflowResultSchema,
   ScoreEditorImportSchema,
   RemoteRunResultSchema,
   RescanResultSchema,
   SetDefaultWorkflowResultSchema,
+  SetHiddenWorkflowResultSchema,
   StageDefaultsSchema,
   TestServerResultSchema,
   UnlinkWorkflowResultSchema,
@@ -48,13 +57,17 @@ import type {
   ImportWorkflowResult,
   LinkWorkflowResult,
   ListWorkflowOverview,
+  MediaInfo,
   MidiEnsureResult,
   MidiEventsResult,
   NativeWorkflow,
   ProxyEnsureResult,
+  PullWorkflowResult,
+  RemoteNativeWorkflow,
   RescanResult,
   ScoreEditorImport,
   SetDefaultWorkflowResult,
+  SetHiddenWorkflowResult,
   TestServerResult,
 } from './schemas'
 
@@ -144,6 +157,26 @@ export async function listNativeWorkflows(kind?: string): Promise<NativeWorkflow
   return res.workflows
 }
 
+export async function listServerNativeWorkflows(
+  serverId: number, kind: string,
+): Promise<RemoteNativeWorkflow[]> {
+  const q = `?kind=${encodeURIComponent(kind)}`
+  const res = await apiFetch(
+    `/comfytv/servers/${serverId}/native_workflows${q}`,
+    ListRemoteNativeWorkflowsSchema,
+  )
+  return res.workflows
+}
+
+export function pullServerWorkflow(
+  serverId: number, kind: string, path: string,
+): Promise<PullWorkflowResult> {
+  return apiSend(
+    `/comfytv/servers/${serverId}/pull_workflow`, 'POST',
+    PullWorkflowResultSchema, { kind, path },
+  )
+}
+
 export function linkWorkflow(
   kind: string, path: string, label?: string,
 ): Promise<LinkWorkflowResult> {
@@ -161,6 +194,13 @@ export function setDefaultWorkflow(
 ): Promise<SetDefaultWorkflowResult> {
   return apiSend(`/comfytv/workflows/${id}/set_default`, 'POST',
     SetDefaultWorkflowResultSchema, { default: isDefault })
+}
+
+export function setHiddenWorkflow(
+  id: number, hidden: boolean,
+): Promise<SetHiddenWorkflowResult> {
+  return apiSend(`/comfytv/workflows/${id}/set_hidden`, 'POST',
+    SetHiddenWorkflowResultSchema, { hidden })
 }
 
 export function listServers(): Promise<z.infer<typeof ListServersSchema>> {
@@ -198,23 +238,29 @@ export function fetchLocalCapabilities(): Promise<Capabilities> {
   return apiFetch('/comfytv/capabilities', CapabilitiesSchema)
 }
 
-export const REMOTE_PROBE_TIMEOUT_MS = 4000
-
-export async function fetchRemoteCapabilities(baseUrl: string): Promise<RemoteCapabilityProbe> {
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), REMOTE_PROBE_TIMEOUT_MS)
+export async function fetchRemoteCapabilities(
+  host: string,
+  port: number,
+): Promise<RemoteCapabilityProbe> {
   try {
-    const resp = await fetch(`${baseUrl.replace(/\/+$/, '')}/comfytv/capabilities`, {
-      signal: controller.signal,
+    const resp: Response = await app.api.fetchApi('/comfytv/servers/probe_capabilities', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host, port }),
     })
     if (!resp.ok) return { installed: false, error: `HTTP ${resp.status}` }
-    const parsed = CapabilitiesSchema.safeParse(await resp.json())
+    const data = await resp.json()
+    if (!data || data.installed !== true) {
+      return {
+        installed: false,
+        error: typeof data?.error === 'string' ? data.error : 'probe failed',
+      }
+    }
+    const parsed = CapabilitiesSchema.safeParse(data.capabilities)
     if (!parsed.success) return { installed: false, error: 'unrecognized capabilities payload' }
     return { installed: true, capabilities: parsed.data }
   } catch (e) {
     return { installed: false, error: e instanceof Error ? e.message : String(e) }
-  } finally {
-    clearTimeout(timer)
   }
 }
 
@@ -240,6 +286,29 @@ export function renameResource(
 
 export function deleteResource(id: number): Promise<z.infer<typeof OkSchema>> {
   return apiSend(`/comfytv/resources/${id}`, 'DELETE', OkSchema)
+}
+
+export function listSkills(): Promise<z.infer<typeof ListSkillsSchema>> {
+  return apiFetch('/comfytv/skills', ListSkillsSchema)
+}
+
+export function toggleSkill(
+  name: string, enabled: boolean,
+): Promise<z.infer<typeof OkSchema>> {
+  return apiSend(`/comfytv/skills/${encodeURIComponent(name)}`, 'PUT',
+    OkSchema, { enabled })
+}
+
+export function importSkill(file: File): Promise<z.infer<typeof ImportSkillSchema>> {
+  const fd = new FormData()
+  fd.append('file', file)
+  return apiFetch('/comfytv/skills/import', ImportSkillSchema,
+    { method: 'POST', body: fd })
+}
+
+export function deleteSkill(name: string): Promise<z.infer<typeof OkSchema>> {
+  return apiSend(`/comfytv/skills/${encodeURIComponent(name)}`, 'DELETE',
+    OkSchema)
 }
 
 export function fetchSettings(): Promise<z.infer<typeof ListSettingsSchema>> {
@@ -303,6 +372,12 @@ export function cancelRemoteJob(jobId: string): Promise<z.infer<typeof OkSchema>
   return apiSend(`/comfytv/remote_jobs/${encodeURIComponent(jobId)}/cancel`, 'POST', OkSchema)
 }
 
+export function getAsset(id: number | string): Promise<Asset | null> {
+  return apiFetch(`/comfytv/assets/${encodeURIComponent(String(id))}`, AssetEnvelopeSchema)
+    .then((r) => r.asset)
+    .catch(() => null)
+}
+
 export function adoptAssets(): Promise<AdoptAssetsResult> {
   return apiSend('/comfytv/assets/adopt', 'POST', AdoptAssetsSchema)
 }
@@ -316,6 +391,27 @@ export function proxyEnsure(
     ...(opts.create ? { create: true } : {}),
     ...(opts.retry ? { retry: true } : {}),
   })
+}
+
+export function fetchMediaInfo(url: string): Promise<MediaInfo> {
+  return apiFetch(`/comfytv/media/info?url=${encodeURIComponent(url)}`, MediaInfoSchema)
+}
+
+export function fetchMediaInfoBatch(urls: string[]): Promise<Record<string, MediaInfo | null>> {
+  return apiSend('/comfytv/media/info_batch', 'POST', MediaInfoBatchSchema, { urls })
+    .then((d) => d.infos)
+}
+
+export function fetchLatestOutputsBatch(
+  projectId: string,
+  items: Array<{ stage_uid: string; output_type?: string | null }>,
+) {
+  return apiSend(
+    `/comfytv/projects/${encodeURIComponent(projectId)}/outputs/latest_batch`,
+    'POST',
+    LatestOutputsBatchSchema,
+    { items },
+  ).then((d) => d.outputs)
 }
 
 export function midiEnsure(url: string): Promise<MidiEnsureResult> {

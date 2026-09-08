@@ -35,7 +35,9 @@ def _workflow_runners_from_db() -> list[LocalComfyUIRunner]:
         kind  = entry["kind"]
         label = entry["label"]
         rid   = f"{kind}/{label}"
-        runners.append(LocalComfyUIRunner(rid, label, {kind}))
+        runner = LocalComfyUIRunner(rid, label, {kind})
+        runner.hidden = bool(entry.get("hidden"))
+        runners.append(runner)
     return runners
 
 

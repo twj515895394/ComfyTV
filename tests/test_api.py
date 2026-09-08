@@ -291,14 +291,39 @@ class TestOutputsRoutes:
         )
         resp = await client.post("/comfytv/projects/default/outputs/adopt",
                                  json={"stage_node_id": "7", "stage_class": "CropStage",
-                                       "stage_uid": "uid-crop"})
+                                       "stage_uid": "uid-crop", "since": "2000-01-01T00:00:00+00:00"})
         data = await resp.json()
         assert data["output"]["payload_url"] == "/old"
         # idempotent / one-time: a different uid can't re-claim
         resp2 = await client.post("/comfytv/projects/default/outputs/adopt",
                                   json={"stage_node_id": "7", "stage_class": "CropStage",
-                                        "stage_uid": "uid-other"})
+                                        "stage_uid": "uid-other", "since": "2000-01-01T00:00:00+00:00"})
         assert (await resp2.json())["output"] is None
+
+    async def test_adopt_without_since_is_bounded_by_the_stage_s_own_history(self, client):
+        from ComfyTV import storage
+        old = storage.persist_output(
+            project_id="default", stage_class="VideoStage", stage_node_id="8",
+            output_type="video", payload_url="/dead-stage-orphan",
+        )
+        storage.persist_output(
+            project_id="default", stage_class="VideoStage", stage_node_id="8",
+            output_type="video", payload_url="/own-first", stage_uid="uid-8",
+        )
+        newest = storage.persist_output(
+            project_id="default", stage_class="VideoStage", stage_node_id="8",
+            output_type="video", payload_url="/latest-run-untagged",
+        )
+        resp = await client.post("/comfytv/projects/default/outputs/adopt",
+                                 json={"stage_node_id": "8", "stage_class": "VideoStage",
+                                       "stage_uid": "uid-8"})
+        data = await resp.json()
+        assert resp.status == 200 and data["output"]["id"] == newest["id"]
+        assert storage.latest_output("default", "8", orphans_only=True)["id"] == old["id"]
+        resp = await client.post("/comfytv/projects/default/outputs/adopt",
+                                 json={"stage_node_id": "8", "stage_class": "VideoStage",
+                                       "stage_uid": "uid-8", "since": "garbage"})
+        assert resp.status == 400
 
     async def test_adopt_outputs_requires_fields(self, client):
         resp = await client.post("/comfytv/projects/default/outputs/adopt",
@@ -599,4 +624,25 @@ class TestWorkflowConfigRoutes:
             "/comfytv/workflows/api_json",
             data="x", headers={"Content-Type": "application/json"},
         )
+        assert resp.status == 400
+
+
+class TestLatestOutputsBatchRoute:
+    async def test_batch_route(self, client):
+        from ComfyTV import storage
+        out = storage.persist_output(
+            project_id="default", stage_class="X", stage_node_id="9",
+            output_type="image", payload_url="/uid-x",
+        )
+        storage.set_output_stage_uid(out["id"], "uid-9")
+        resp = await client.post("/comfytv/projects/default/outputs/latest_batch",
+                                 json={"items": [{"stage_uid": "uid-9"}, {"stage_uid": "nope"}]})
+        assert resp.status == 200
+        data = await resp.json()
+        assert data["outputs"][0]["payload_url"] == "/uid-x"
+        assert data["outputs"][1] is None
+
+    async def test_batch_route_rejects_bad_body(self, client):
+        resp = await client.post("/comfytv/projects/default/outputs/latest_batch",
+                                 json={"items": "x"})
         assert resp.status == 400

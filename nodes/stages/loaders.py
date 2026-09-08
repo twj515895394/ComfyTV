@@ -1,6 +1,9 @@
 from ._common import *  # noqa: F401, F403
 
 
+_UPLOADS_SUBFOLDER = "comfytv/uploads"
+
+
 def _list_input_files(content_kinds: list[str]) -> list[str]:
     try:
         input_dir = folder_paths.get_input_directory()
@@ -8,6 +11,13 @@ def _list_input_files(content_kinds: list[str]) -> list[str]:
             f for f in os.listdir(input_dir)
             if os.path.isfile(os.path.join(input_dir, f))
         ]
+        uploads_dir = os.path.join(input_dir, *_UPLOADS_SUBFOLDER.split("/"))
+        if os.path.isdir(uploads_dir):
+            files.extend(
+                f"{_UPLOADS_SUBFOLDER}/{f}"
+                for f in os.listdir(uploads_dir)
+                if os.path.isfile(os.path.join(uploads_dir, f))
+            )
         return sorted(folder_paths.filter_files_content_types(files, content_kinds))
     except Exception:
         return []
@@ -30,6 +40,22 @@ def _list_3d_input_files() -> list[str]:
         return sorted(out)
     except Exception:
         return []
+
+
+def _require_asset_file(asset_url: str) -> None:
+    url = (asset_url or "").strip()
+    if not url.startswith("/view?"):
+        return
+    from ...runners.media import view_url_to_path
+    try:
+        missing = view_url_to_path(url) is None
+    except Exception:
+        return
+    if missing:
+        raise RuntimeError(
+            "asset file is missing on disk — the library entry points to a "
+            f"deleted file ({url}); re-import it or pick another asset"
+        )
 
 
 def _asset_loader_inputs() -> list:
@@ -147,6 +173,7 @@ class AssetImageLoaderStage(io.ComfyNode):
 
     @classmethod
     def execute(cls, project_id="", parent_output_id=0, asset_url="", asset_id=0, category="all"):
+        _require_asset_file(asset_url)
         return _stage_emit_auto(cls, project_id=project_id, payload_str=asset_url or "",
                                 parent_output_id=parent_output_id)
 
@@ -167,6 +194,7 @@ class AssetVideoLoaderStage(io.ComfyNode):
 
     @classmethod
     def execute(cls, project_id="", parent_output_id=0, asset_url="", asset_id=0, category="all"):
+        _require_asset_file(asset_url)
         return _stage_emit_auto(cls, project_id=project_id, payload_str=asset_url or "",
                                 parent_output_id=parent_output_id)
 
@@ -187,7 +215,45 @@ class AssetAudioLoaderStage(io.ComfyNode):
 
     @classmethod
     def execute(cls, project_id="", parent_output_id=0, asset_url="", asset_id=0, category="all"):
+        _require_asset_file(asset_url)
         return _stage_emit_auto(cls, project_id=project_id, payload_str=asset_url or "",
+                                parent_output_id=parent_output_id)
+
+
+_TEXT_ASSET_MAX_BYTES = 2 * 1024 * 1024
+
+
+def _read_text_asset(asset_url: str) -> str:
+    url = (asset_url or "").strip()
+    if not url.startswith("/view?"):
+        return ""
+    from ...runners.media import view_url_to_path
+    path = view_url_to_path(url)
+    if path is None:
+        return ""
+    data = path.read_bytes()[:_TEXT_ASSET_MAX_BYTES]
+    return data.decode("utf-8-sig", errors="replace")
+
+
+class AssetTextLoaderStage(io.ComfyNode):
+
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="ComfyTV.AssetTextLoaderStage",
+            display_name="Load Text from Asset",
+            category="ComfyTV/Input",
+            inputs=_asset_loader_inputs(),
+            outputs=[COMFYTV_TEXT.Output("text")],
+            is_output_node=True,
+            hidden=[io.Hidden.unique_id],
+        )
+
+    @classmethod
+    def execute(cls, project_id="", parent_output_id=0, asset_url="", asset_id=0, category="all"):
+        _require_asset_file(asset_url)
+        return _stage_emit_auto(cls, project_id=project_id,
+                                payload_str=_read_text_asset(asset_url),
                                 parent_output_id=parent_output_id)
 
 
@@ -219,6 +285,7 @@ class AssetModelLoaderStage(io.ComfyNode):
     @classmethod
     def execute(cls, project_id="", parent_output_id=0, asset_url="", asset_id=0,
                 category="all", captured_image=""):
+        _require_asset_file(asset_url)
         return _stage_emit_auto(cls, project_id=project_id, payload_str=asset_url or "",
                                 parent_output_id=parent_output_id,
                                 picked_payload=captured_image or "")

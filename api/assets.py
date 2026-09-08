@@ -1,3 +1,4 @@
+import mimetypes
 import time
 import urllib.parse
 from pathlib import Path
@@ -5,7 +6,7 @@ from pathlib import Path
 from aiohttp import web
 
 from .. import storage
-from ._common import routes, broadcast_asset_event
+from ._common import _log, routes, broadcast_asset_event
 
 MEDIA_SUBFOLDER = "comfytv/media"
 MEDIA_SETTLE_SECONDS = 10.0
@@ -13,6 +14,7 @@ MEDIA_EXTS = {
     "video": {".mp4", ".mov", ".mkv", ".webm", ".m4v", ".avi"},
     "image": {".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"},
     "audio": {".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".opus"},
+    "text": {".txt", ".md", ".srt", ".vtt", ".csv"},
 }
 
 
@@ -61,8 +63,8 @@ def adopt_media_folder() -> list[dict]:
             name=p.stem,
             payload_url=url,
             media_type=media_type,
-            size_bytes=st.st_size,
             source="folder",
+            **fill_media_meta(url, {"size_bytes": st.st_size}),
         )
         if row is not None:
             adopted.append(row)
@@ -84,6 +86,44 @@ async def adopt_assets(request: web.Request) -> web.Response:
         "adopted": len(adopted),
         "dir": str(media_dir()),
     })
+
+
+_META_KEYS = ("mime_type", "width", "height", "size_bytes")
+
+
+def fill_media_meta(payload_url: str, given: dict | None = None) -> dict:
+    out = {k: (given or {}).get(k) for k in _META_KEYS}
+    if all(v is not None for v in out.values()):
+        return out
+    try:
+        from ..runners._media_paths import localize
+        from ..runners.media_info import probe_media
+        path = localize(payload_url)
+        info = probe_media(payload_url)
+    except Exception as e:
+        _log.info("[ComfyTV/assets] probe skipped for %s: %s", payload_url, e)
+        return out
+    for k in ("width", "height", "size_bytes"):
+        if out[k] is None and info.get(k) is not None:
+            out[k] = int(info[k])
+    if out["mime_type"] is None:
+        out["mime_type"] = mimetypes.guess_type(path.name)[0]
+    return out
+
+
+def _file_missing(url) -> bool:
+    from ..runners.media import view_url_to_path
+    if not isinstance(url, str) or not url.startswith("/view?"):
+        return False
+    try:
+        return view_url_to_path(url) is None
+    except Exception:
+        return False
+
+
+def _with_file_missing(row: dict) -> dict:
+    row["file_missing"] = _file_missing(row.get("payload_url"))
+    return row
 
 
 def _int_list(value) -> tuple[bool, list[int] | None]:
@@ -172,7 +212,7 @@ async def list_assets(request: web.Request) -> web.Response:
         except ValueError:
             return web.json_response({"error": "category must be 'all', 'none' or an id"}, status=400)
         rows = storage.list_assets(category_id=cid, limit=limit, offset=offset)
-    return web.json_response({"assets": rows})
+    return web.json_response({"assets": [_with_file_missing(r) for r in rows]})
 
 
 @routes.post("/comfytv/assets")
@@ -199,15 +239,13 @@ async def create_asset(request: web.Request) -> web.Response:
         payload_url=payload_url,
         media_type=media_type,
         category_ids=category_ids,
-        mime_type=body.get("mime_type"),
-        width=body.get("width"),
-        height=body.get("height"),
-        size_bytes=body.get("size_bytes"),
         source=body.get("source"),
+        **fill_media_meta(payload_url, body),
         metadata=metadata if isinstance(metadata, dict) else None,
     )
     if row is None:
         return web.json_response({"error": "invalid asset (bad category or payload)"}, status=400)
+    row = _with_file_missing(row)
     broadcast_asset_event("create", {"asset": row})
     return web.json_response({"ok": True, "asset": row})
 
@@ -237,6 +275,7 @@ async def update_asset(request: web.Request) -> web.Response:
     )
     if row is None:
         return web.json_response({"error": "asset or category not found"}, status=404)
+    row = _with_file_missing(row)
     broadcast_asset_event("update", {"asset": row})
     return web.json_response({"ok": True, "asset": row})
 
@@ -251,6 +290,7 @@ async def add_asset_category(request: web.Request) -> web.Response:
     row = storage.add_asset_category(aid, cid)
     if row is None:
         return web.json_response({"error": "asset or category not found"}, status=404)
+    row = _with_file_missing(row)
     broadcast_asset_event("update", {"asset": row})
     return web.json_response({"ok": True, "asset": row})
 
@@ -265,8 +305,21 @@ async def remove_asset_category(request: web.Request) -> web.Response:
     row = storage.remove_asset_category(aid, cid)
     if row is None:
         return web.json_response({"error": "asset not found"}, status=404)
+    row = _with_file_missing(row)
     broadcast_asset_event("update", {"asset": row})
     return web.json_response({"ok": True, "asset": row})
+
+
+@routes.get("/comfytv/assets/{aid}")
+async def get_asset(request: web.Request) -> web.Response:
+    try:
+        aid = int(request.match_info["aid"])
+    except ValueError:
+        return web.json_response({"error": "invalid asset id"}, status=400)
+    row = storage.get_asset(aid)
+    if not row:
+        return web.json_response({"error": "asset not found"}, status=404)
+    return web.json_response({"asset": _with_file_missing(row)})
 
 
 @routes.delete("/comfytv/assets/{aid}")

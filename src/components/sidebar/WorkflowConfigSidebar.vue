@@ -276,6 +276,12 @@
           @click="onExportPreset"
         ><i class="pi pi-download" /> {{ $t('configSidebar.exportPreset') }}</button>
         <button
+          :class="exportBtn"
+          :disabled="config.file_exists === false || openInComfyBusy"
+          :title="$t('openInComfy.tooltip')"
+          @click="onOpenInComfy"
+        ><i class="pi pi-external-link" /> {{ $t('openInComfy.open') }}</button>
+        <button
           :class="resetBtn"
           :disabled="resetBusy"
           :title="$t('configSidebar.resetToPresetTooltip')"
@@ -323,8 +329,10 @@ const {
   resetBusy,  resetError,
   uploadApiBusy, uploadApiError,
   unlinkBusy, unlinkError,
+  openInComfyBusy,
   loadConfig,
   onExportPreset,
+  onOpenInComfy,
   onResetToPreset,
   onUploadApiSidecar,
   onUnlink,

@@ -7,6 +7,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from ._media_paths import strip_filename_annotation
 from .base import RunnerContext
 
 _log = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ _UPSTREAM_PAT = re.compile(
 KEEP_ORIGINAL = object()
 
 _MEDIA_KINDS = ("image", "video", "audio", "model")
+_NUMERIC_CASTS = ("int", "float")
 
 
 _UPSTREAM_BUCKET_BY_KIND = {
@@ -128,6 +130,7 @@ def _view_url_to_annotated(url: str) -> str:
     type_ = params.get("type", "output").lower()
     if not filename:
         raise RuntimeError(f"i2i source URL has no filename: {url!r}")
+    filename, type_ = strip_filename_annotation(filename, type_)
     if type_ not in ("output", "input", "temp"):
         raise RuntimeError(f"i2i source URL has unknown type={type_!r}")
     path = f"{subfolder}/{filename}" if subfolder else filename
@@ -288,9 +291,9 @@ class _Resolver:
                 raise RuntimeError(
                     spec.get("error") or f"{where}: required but empty"
                 )
-            if media_upstream:
+            if media_upstream or cast in _NUMERIC_CASTS:
                 _log.info(
-                    "[ComfyTV] %s: optional %s has nothing wired — "
+                    "[ComfyTV] %s: optional %s resolved empty — "
                     "keeping the workflow's own value", where, src,
                 )
                 return KEEP_ORIGINAL
@@ -301,4 +304,9 @@ class _Resolver:
         if (prefix or suffix) and isinstance(value, str):
             value = (str(prefix) if prefix else "") + value + (str(suffix) if suffix else "")
 
-        return _cast(value, cast)
+        try:
+            return _cast(value, cast)
+        except (ValueError, TypeError) as e:
+            raise RuntimeError(
+                f"{where}: cannot cast {value!r} (from {src}) to {cast}: {e}"
+            ) from e

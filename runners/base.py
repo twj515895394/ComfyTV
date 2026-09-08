@@ -27,6 +27,7 @@ class Runner:
         self.id = id
         self.label = label
         self.kinds = frozenset(kinds)
+        self.hidden = False
 
     async def invoke(self, ctx: RunnerContext) -> OutputPayload:
         raise NotImplementedError(
@@ -59,7 +60,7 @@ class RunnerRegistry:
         return [r for r in self._runners.values() if kind in r.kinds]
 
     def labels_for_kind(self, kind: StageKind) -> list[str]:
-        return [r.label for r in self.for_kind(kind)]
+        return [r.label for r in self.for_kind(kind) if not r.hidden]
 
     def by_label(self, label: str, kind: StageKind) -> Runner | None:
         for r in self.for_kind(kind):

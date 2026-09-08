@@ -1,0 +1,212 @@
+import { z } from 'zod'
+
+import { apiFetch, apiSend } from '@/api'
+import { getStageUid, stageClassName } from '@/composables/stages/stageIdentity'
+
+const OkSchema = z.object({ ok: z.boolean() })
+const ActivitySchema = z.object({ active: z.boolean() })
+
+const MCP_ACTIVITY_EVENT = 'comfytv-mcp-activity'
+
+const TICK_MS = 5000
+const HEARTBEAT_MS = 15000
+const PROMPT_MAX_CHARS = 4000
+const MENTION_PAT = /@([A-Za-z]+_\d+)/g
+
+export interface CanvasMirrorDeps {
+  resolveApp: () => any
+  resolveProjectId: () => string
+  resolveStageState: (node: any) => { output?: string | null; running?: boolean; error?: { message: string } | null } | undefined
+  resolvePageActive?: () => boolean | undefined
+}
+
+function widgetValue(node: any, name: string): string {
+  const w = (node.widgets ?? []).find((w: any) => w?.name === name)
+  return w?.value == null ? '' : String(w.value)
+}
+
+function resolveLink(graph: any, linkId: any): any {
+  const links = graph?.links
+  if (!links) return null
+  if (typeof links.get === 'function') return links.get(linkId)
+  return links[linkId] ?? graph?.getLink?.(linkId) ?? null
+}
+
+function stageInputs(graph: any, node: any): { slot: string; from_node: string; from_uid: string }[] {
+  const out: { slot: string; from_node: string; from_uid: string }[] = []
+  for (const inp of node.inputs ?? []) {
+    if (inp?.link == null) continue
+    const link = resolveLink(graph, inp.link)
+    if (!link) continue
+    const src = graph?.getNodeById?.(link.origin_id)
+    out.push({
+      slot: String(inp.name ?? ''),
+      from_node: String(link.origin_id),
+      from_uid: src ? getStageUid(src) : '',
+    })
+  }
+  return out
+}
+
+function lastRun(state: { output?: string | null; running?: boolean; error?: { message: string } | null } | undefined) {
+  if (state?.running) return { status: 'running' }
+  if (state?.error) return { status: 'error', error: state.error.message }
+  if (state?.output) return { status: 'ok' }
+  return { status: 'never' }
+}
+
+export function buildCanvasSnapshot(deps: CanvasMirrorDeps): { project_id: string; stages: any[] } | null {
+  const app = deps.resolveApp()
+  const projectId = deps.resolveProjectId()
+  const graph = app?.graph
+  if (!projectId || !graph) return null
+
+  const stages: any[] = []
+  for (const node of graph._nodes ?? []) {
+    const cls = String(node?.comfyClass ?? node?.type ?? '')
+    if (!cls.startsWith('ComfyTV.')) continue
+    const prompt = widgetValue(node, 'main_prompt')
+    stages.push({
+      uid: getStageUid(node),
+      graph_node_id: String(node.id),
+      node_id: cls,
+      stage_class: stageClassName(node),
+      title: String(node.title ?? ''),
+      review_state: String(node.properties?.comfytv_review ?? ''),
+      workflow: widgetValue(node, 'workflow'),
+      prompt: prompt.slice(0, PROMPT_MAX_CHARS),
+      mentions: [...prompt.matchAll(MENTION_PAT)].map((m) => m[1]),
+      inputs: stageInputs(graph, node),
+      last_run: lastRun(deps.resolveStageState(node)),
+    })
+  }
+  return { project_id: projectId, stages }
+}
+
+export function installCanvasMirror(app: any, deps: CanvasMirrorDeps): (() => void) | false {
+  if (app.__comfytvCanvasMirrorInstalled) return false
+  app.__comfytvCanvasMirrorInstalled = true
+
+  let lastPosted = ''
+  let lastPostedProject = ''
+  let lastPostedPageActive: boolean | undefined
+  let forcePageStatePost = false
+  let lastPostAt = 0
+  let inFlight = false
+  let timer: ReturnType<typeof setInterval> | null = null
+
+  function tabInfo() {
+    const api = deps.resolveApp()?.api
+    const readyState = api?.socket?.readyState
+    const pageActive = deps.resolvePageActive
+      ? deps.resolvePageActive()
+      : (() => {
+        if (typeof document === 'undefined') return undefined
+        return document.visibilityState !== 'hidden'
+      })()
+    return {
+      clientId: api?.clientId ? String(api.clientId) : undefined,
+      wsConnected: typeof readyState === 'number' ? readyState === 1 : undefined,
+      pageActive,
+    }
+  }
+
+  async function tick() {
+    if (inFlight) return
+    const snapshot = buildCanvasSnapshot(deps)
+    if (!snapshot) return
+    const { clientId, wsConnected, pageActive } = tabInfo()
+    const serialized = JSON.stringify(snapshot)
+    const now = Date.now()
+    const changed = serialized !== lastPosted
+    const heartbeatDue = now - lastPostAt >= HEARTBEAT_MS
+    const pageStateChanged = forcePageStatePost
+      || (pageActive !== undefined && pageActive !== lastPostedPageActive)
+    const fullPost = pageActive !== false && (changed || pageStateChanged)
+    if (!fullPost && !heartbeatDue && !pageStateChanged) return
+
+    inFlight = true
+    try {
+      if (fullPost) {
+        await apiSend('/comfytv/canvas_state', 'POST', OkSchema, {
+          ...snapshot,
+          ...(clientId ? { client_id: clientId } : {}),
+          ...(wsConnected !== undefined ? { ws_connected: wsConnected } : {}),
+          ...(pageActive !== undefined ? { page_active: pageActive } : {}),
+        })
+        lastPosted = serialized
+        lastPostedProject = snapshot.project_id
+      } else {
+        try {
+          await apiSend('/comfytv/canvas_state', 'POST', OkSchema, {
+            project_id: lastPostedProject || snapshot.project_id,
+            heartbeat: true,
+            ...(clientId ? { client_id: clientId } : {}),
+            ...(wsConnected !== undefined ? { ws_connected: wsConnected } : {}),
+            ...(pageActive !== undefined ? { page_active: pageActive } : {}),
+          })
+        } catch (e) {
+          if ((e as any)?.status === 409) {
+            lastPosted = serialized
+          } else {
+            lastPosted = ''
+          }
+          throw e
+        }
+      }
+      lastPostedPageActive = pageActive
+      forcePageStatePost = false
+      lastPostAt = now
+    } catch (e) {
+      const status = (e as any)?.status
+      if (pageStateChanged && (status === 404 || status === 409)) {
+        lastPostedPageActive = pageActive
+        forcePageStatePost = false
+      }
+    } finally {
+      inFlight = false
+    }
+  }
+
+  function start() {
+    if (timer != null) return
+    timer = setInterval(tick, TICK_MS)
+    void tick()
+  }
+
+  const onActivity = () => start()
+  const onPageStateChange = () => {
+    forcePageStatePost = true
+    if (timer != null) void tick()
+  }
+  app.api?.addEventListener?.(MCP_ACTIVITY_EVENT, onActivity)
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', onPageStateChange)
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('focus', onPageStateChange)
+    window.addEventListener('blur', onPageStateChange)
+  }
+
+  void (async () => {
+    try {
+      const status = await apiFetch('/comfytv/mcp_activity', ActivitySchema)
+      if (status.active) start()
+    } catch {
+    }
+  })()
+
+  return () => {
+    if (timer != null) clearInterval(timer)
+    timer = null
+    app.api?.removeEventListener?.(MCP_ACTIVITY_EVENT, onActivity)
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', onPageStateChange)
+    }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('focus', onPageStateChange)
+      window.removeEventListener('blur', onPageStateChange)
+    }
+    app.__comfytvCanvasMirrorInstalled = false
+  }
+}

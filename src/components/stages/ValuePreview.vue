@@ -18,6 +18,10 @@
                 :title="$t('stage.action.copyText')"
                 @click.stop="onCopyText"><i :class="textCopied ? 'pi pi-check' : 'pi pi-copy'" /></button>
         <button type="button" :class="imgActionBtn"
+                :title="$t('stage.action.saveTextAsset')"
+                :disabled="textSaving"
+                @click.stop="onSaveTextAsset"><i :class="textSaved ? 'pi pi-check' : 'pi pi-tag'" /></button>
+        <button type="button" :class="imgActionBtn"
                 :title="$t('stage.action.download')"
                 @click.stop="onDownloadText"><i class="pi pi-download" /></button>
       </div>
@@ -30,10 +34,11 @@
     >
       <img
         ref="zoomImg"
-        :src="String(content)"
+        :src="mainImgSrc"
         class="ctv:block ctv:size-full ctv:object-contain ctv:select-none"
         :alt="String(content)"
         draggable="false"
+        @error="onMainImgError"
       />
       <div :class="imgActionsClass">
         <MediaActionBar
@@ -49,9 +54,10 @@
         />
       </div>
     </div>
-    <img
+    <ThumbImg
       v-else-if="type === 'COMFYTV_IMAGE' || type === 'COMFYTV_PANORAMA'"
       :src="String(content)"
+      :thumb-max="THUMB_CELL"
       :class="imgClass"
       :alt="String(content)"
     />
@@ -77,23 +83,41 @@
         />
       </div>
     </div>
-    <ProxiedVideo
-      v-else-if="type === 'COMFYTV_VIDEO'"
-      :src="String(content)"
-      :class="videoClass"
-      controls muted playsinline preload="metadata"
-    />
+    <div v-else-if="type === 'COMFYTV_VIDEO'" class="ctv:relative ctv:size-full">
+      <ThumbImg
+        :src="String(content)"
+        :thumb-max="THUMB_CELL"
+        :class="imgClass"
+        :alt="String(content)"
+      />
+      <i class="pi pi-play-circle ctv:absolute ctv:bottom-1 ctv:right-1 ctv:text-sm ctv:text-white/80 ctv:pointer-events-none ctv:drop-shadow" />
+    </div>
 
     <template v-else-if="type === 'COMFYTV_AUDIO'">
       <div v-if="compact" :class="compactSummary">
         <span class="ctv:text-[22px] ctv:leading-none"><i class="pi pi-volume-up" /></span>
       </div>
-      <audio
+      <div
         v-else
-        :src="String(content)"
-        class="ctv:block ctv:w-full ctv:mt-3.5"
-        controls preload="metadata"
-      />
+        class="vp-img-host ctv:group ctv:relative ctv:w-full"
+      >
+        <audio
+          :src="String(content)"
+          class="ctv:block ctv:w-full ctv:mt-3.5"
+          controls preload="metadata"
+        />
+        <div :class="imgActionsClass">
+          <MediaActionBar
+            :url="String(content)"
+            :label="nameFromUrl(String(content))"
+            :media-type="previewMediaType"
+            :saved="isSaved(String(content))"
+            @download="onDownload"
+            @tag="onTagFromBar"
+            @load-asset="onLoadAssetFromBar"
+          />
+        </div>
+      </div>
     </template>
 
     <template v-else-if="type === 'COMFYTV_MODEL'">
@@ -204,9 +228,10 @@
 
     <template v-else-if="type === 'COMFYTV_IMAGES'">
       <template v-if="compact">
-        <img
+        <ThumbImg
           v-if="batchImages[0]"
           :src="batchImages[0].image_url"
+          :thumb-max="THUMB_CELL"
           :class="imgClass"
           :alt="`${batchImages.length} items`"
         />
@@ -229,8 +254,9 @@
           @click="clickMode === 'pick' ? onItemClick(img, i) : undefined"
           @keydown="clickMode === 'pick' ? onCellKey(img, i, $event) : undefined"
         >
-          <img :src="img.image_url" :alt="img.label || img.prompt || `item ${i + 1}`"
-               class="ctv:block ctv:size-full ctv:object-cover ctv:pointer-events-none" />
+          <ThumbImg :src="img.image_url" :thumb-max="THUMB_CELL"
+                    :alt="img.label || img.prompt || `item ${i + 1}`"
+                    class="ctv:block ctv:size-full ctv:object-cover ctv:pointer-events-none" />
           <span class="ctv:absolute ctv:bottom-0.5 ctv:left-0.5 ctv:py-px ctv:px-1 ctv:text-3xs ctv:font-bold ctv:rounded-sm
                        ctv:bg-black/70 ctv:text-[#ffb0d8]">
             {{ img.label ?? `#${img.index ?? i + 1}` }}
@@ -428,12 +454,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, toRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, toRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ModelPreview from './ModelPreview.vue'
 import MediaActionBar from './MediaActionBar.vue'
 import ModelThumb from '@/components/widgets/ModelThumb.vue'
 import ProxiedVideo from '@/components/widgets/ProxiedVideo.vue'
+import ThumbImg from '@/components/widgets/ThumbImg.vue'
 import { askText } from '@/composables/dialog/useTextInputDialog'
 import { useImagePanZoom } from '@/composables/widgets/useImagePanZoom'
 import { openLightbox } from '@/composables/useLightbox'
@@ -460,6 +487,7 @@ import type {
   ItemClickPayload,
 } from '@/types/payloads'
 import { downloadFile } from '@/utils/download'
+import { THUMB_CELL, THUMB_PREVIEW, thumbUrl } from '@/utils/thumbUrl'
 
 const { t } = useI18n()
 
@@ -550,6 +578,18 @@ const props = defineProps<{
 
 useImagePanZoom(zoomContainer, zoomImg, { resetKey: toRef(props, 'content') })
 
+const mainThumbFailed = ref(false)
+watch(() => props.content, () => { mainThumbFailed.value = false })
+const mainImgSrc = computed(() => {
+  const src = String(props.content ?? '')
+  return mainThumbFailed.value ? src : thumbUrl(src, THUMB_PREVIEW)
+})
+function onMainImgError() {
+  if (!mainThumbFailed.value && mainImgSrc.value !== String(props.content ?? '')) {
+    mainThumbFailed.value = true
+  }
+}
+
 const {
   hasContent,
   shortType,
@@ -590,8 +630,11 @@ function onLoadAssetFromBar(p: { url: string; label: string }) {
 
 const {
   textCopied,
+  textSaved,
+  textSaving,
   copyText: onCopyText,
   downloadText: onDownloadText,
+  saveTextAsset: onSaveTextAsset,
 } = useTextOutputActions(() => String(props.content ?? ''))
 
 function onItemClick(img: BatchImage, i: number) {

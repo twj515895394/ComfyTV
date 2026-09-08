@@ -2,24 +2,33 @@ import re
 
 from aiohttp import web
 
-from ..nodes.stages import STAGE_META
+from ..nodes.stages import STAGE_META, registered_stage_names
 from ..nodes.stages.common.caps import caps_payload
 from ..runners import RUNNER_REGISTRY, WORKFLOW_KINDS
 from ._common import routes
 
 
-@routes.get("/comfytv/stages")
-async def list_stages(_request: web.Request) -> web.Response:
-    stages = [
+NOT_RUNNABLE_VARIANTS = ("loader", "transform")
+
+
+def stages_payload() -> list[dict]:
+    registered = registered_stage_names()
+    return [
         {
             "node_id": f"ComfyTV.{cls_name}",
             "kind": meta.get("kind", "image"),
             "variant": meta.get("variant"),
             "workflow_kind": meta.get("workflow_kind"),
+            "runnable": meta.get("variant") not in NOT_RUNNABLE_VARIANTS,
         }
         for cls_name, meta in STAGE_META.items()
+        if cls_name in registered
     ]
-    return web.json_response({"stages": stages})
+
+
+@routes.get("/comfytv/stages")
+async def list_stages(_request: web.Request) -> web.Response:
+    return web.json_response({"stages": stages_payload()})
 
 
 @routes.get("/comfytv/caps")
@@ -39,11 +48,17 @@ def _compute_input_usage(bindings: list[dict]) -> dict:
     required_slots: dict[str, set[int]] = {k: set() for k in _KINDS}
     max_inputs: dict[str, int | None] = {k: 0 for k in _KINDS}
     uses_main_prompt = False
+    uses_computed = {"width": False, "height": False, "length": False}
 
     for cell in bindings or []:
         src = str(cell.get("from") or "")
         if src == "main_prompt":
             uses_main_prompt = True
+            continue
+        if src.startswith("computed:"):
+            key = src.split(":", 1)[1]
+            if key in uses_computed:
+                uses_computed[key] = True
             continue
         m = _UPSTREAM_PAT.match(src)
         if not m:
@@ -67,11 +82,11 @@ def _compute_input_usage(bindings: list[dict]) -> dict:
         "requires": requires,
         "required_slots": {k: sorted(v) for k, v in required_slots.items()},
         "max_inputs": max_inputs,
+        "uses_computed": uses_computed,
     }
 
 
-@routes.get("/comfytv/workflow_info")
-async def workflow_info(_request: web.Request) -> web.Response:
+def workflow_info_payload() -> dict:
     from ..runners import workflow_db
     out: dict[str, dict[str, dict]] = {kind: {} for kind in WORKFLOW_KINDS}
 
@@ -91,4 +106,9 @@ async def workflow_info(_request: web.Request) -> web.Response:
                     "max_inputs":     {k_: 0     for k_ in _KINDS},
                 }
 
-    return web.json_response(out)
+    return out
+
+
+@routes.get("/comfytv/workflow_info")
+async def workflow_info(_request: web.Request) -> web.Response:
+    return web.json_response(workflow_info_payload())

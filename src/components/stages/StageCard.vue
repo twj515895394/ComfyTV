@@ -1,10 +1,10 @@
 <template>
   <div
     :class="cardClass"
-    @dragenter="onCardDragEnter"
-    @dragover="onCardDragOver"
-    @dragleave="onCardDragLeave"
-    @drop="onCardDrop"
+    @dragenter.capture="onCardDragEnter"
+    @dragover.capture="onCardDragOver"
+    @dragleave.capture="onCardDragLeave"
+    @drop.capture="onCardDrop"
   >
     <MainPromptInput v-if="!hidePrompt" :node="node" />
 
@@ -45,6 +45,13 @@
             <button :class="clearBtn" @click="confirmingClear = false">{{ $t('stage.pool.cancel') }}</button>
           </template>
         </template>
+        <button
+          v-if="hasAppendToggle"
+          :class="[poolCount > 0 ? '' : 'ctv:ml-auto', clearBtn,
+                   !poolAppendOn && 'ctv:text-warning-background']"
+          :title="$t('stage.pool.modeHint')"
+          @click.stop="togglePoolAppend"
+        >{{ poolAppendOn ? $t('stage.pool.modeAppend') : $t('stage.pool.modeReplace') }}</button>
       </div>
       <ValuePreview
         :type="poolPreviewType"
@@ -186,6 +193,10 @@
                   :title="$t('stage.action.copyText')"
                   @click.stop="copyTextOutput"><i :class="textOutputCopied ? 'pi pi-check' : 'pi pi-copy'" /></button>
           <button type="button" :class="textOutputBtn"
+                  :title="$t('stage.action.saveTextAsset')"
+                  :disabled="textOutputSaving"
+                  @click.stop="saveTextOutputAsset"><i :class="textOutputSaved ? 'pi pi-check' : 'pi pi-tag'" /></button>
+          <button type="button" :class="textOutputBtn"
                   :title="$t('stage.action.download')"
                   @click.stop="downloadTextOutput"><i class="pi pi-download" /></button>
         </div>
@@ -278,7 +289,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import ImageReferences from './ImageReferences.vue'
 import MainPromptInput from './MainPromptInput.vue'
@@ -306,6 +317,7 @@ import { batchImageUrls, isPoolPickerKind, toImagePoolJson, useStageStore, type 
 import { usePinnedBatchStore } from '@/stores/pinnedBatchStore'
 import { useProjectStore } from '@/stores/projectStore'
 import { ensureStageUid } from '@/composables/stages/stageIdentity'
+import { bindWidgetCallback, getWidget, writeWidget } from '@/utils/widget'
 
 const props = defineProps<{
   state: StageState
@@ -342,6 +354,21 @@ const {
 } = useStageCard(() => props.state, props.onAction)
 
 const isPicker = computed(() => isPoolPickerKind(props.state.kind))
+
+const hasAppendToggle = computed(() => isPicker.value && !!getWidget(props.node, 'append_results'))
+const poolAppendOn = ref(true)
+const syncPoolAppend = () => {
+  const w = getWidget(props.node, 'append_results')
+  poolAppendOn.value = !w || w.value !== false
+}
+onMounted(() => {
+  syncPoolAppend()
+  bindWidgetCallback(props.node, 'append_results', syncPoolAppend)
+})
+function togglePoolAppend() {
+  writeWidget(props.node, 'append_results', !poolAppendOn.value)
+  syncPoolAppend()
+}
 
 const acceptsContextMedia = computed(() => nodeAcceptsAutogrowImages(props.node))
 
@@ -395,8 +422,11 @@ const textOutputSummary = computed(() => {
 })
 const {
   textCopied: textOutputCopied,
+  textSaved: textOutputSaved,
+  textSaving: textOutputSaving,
   copyText: copyTextOutput,
   downloadText: downloadTextOutput,
+  saveTextAsset: saveTextOutputAsset,
 } = useTextOutputActions(() => String(props.state.output ?? ''))
 const textOutputBtn = 'ctv:flex ctv:items-center ctv:justify-center ctv:size-5 ctv:p-0 ctv:rounded-sm ctv:text-xs ctv:cursor-pointer'
   + ' ctv:bg-secondary-background ctv:border ctv:border-border-subtle ctv:text-muted-foreground ctv:hover:text-base-foreground ctv:hover:border-primary-background'

@@ -1,8 +1,14 @@
-from . import seed, config, bindings, link  # noqa: F401 — for test monkeypatching
+from . import seed, config, bindings, convert, link, pull  # noqa: F401 — for test monkeypatching
+from .convert import (
+    build_object_info,
+    convert_gui_to_api,
+    convert_workflow,
+)
 from .seed import (
     seed_workflows_from_disk,
     reset_workflow_to_preset,
     import_workflow,
+    create_workflow,
     _is_gui_format, _label_from_stem, _read_preset, _safe_stem,
     _apply_preset_to_new_row, _upsert_workflow_row,
 )
@@ -10,6 +16,10 @@ from .link import (
     link_workflow,
     unlink_workflow,
     list_native_workflows,
+)
+from .pull import (
+    import_pulled_workflow,
+    pulled_workflows,
 )
 from .config import (
     build_preset,
@@ -23,6 +33,7 @@ from .bindings import (
     delete_input_binding,
     update_workflow_meta,
     set_default_workflow,
+    set_hidden_workflow,
     get_default_label,
     list_workflow_bindings,
     list_workflows,
@@ -37,9 +48,12 @@ __all__ = [
     "seed_workflows_from_disk",
     "reset_workflow_to_preset",
     "import_workflow",
+    "create_workflow",
     "link_workflow",
     "unlink_workflow",
     "list_native_workflows",
+    "import_pulled_workflow",
+    "pulled_workflows",
     "build_preset",
     "get_workflow_for_invoke",
     "get_workflow_config",
@@ -47,6 +61,7 @@ __all__ = [
     "delete_input_binding",
     "update_workflow_meta",
     "set_default_workflow",
+    "set_hidden_workflow",
     "get_default_label",
     "list_workflow_bindings",
     "list_workflows",
@@ -55,4 +70,7 @@ __all__ = [
     "read_workflow_file",
     "set_api_json",
     "save_api_sidecar",
+    "build_object_info",
+    "convert_gui_to_api",
+    "convert_workflow",
 ]

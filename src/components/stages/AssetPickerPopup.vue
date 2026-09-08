@@ -25,6 +25,13 @@
         :class="tabClass(tab === 'library')"
         @click="tab = 'library'"
       >{{ $t('promptAssets.tabLibrary') }}</button>
+      <span class="ctv:flex-1"></span>
+      <button
+        type="button"
+        :class="closeBtnClass"
+        :title="$t('promptAssets.close')"
+        @click="$emit('close')"
+      ><i class="pi pi-times" /></button>
     </div>
 
     <div
@@ -57,7 +64,7 @@
             :key="i"
             type="button"
             :class="[
-              'ctv:relative ctv:flex ctv:flex-col ctv:p-0 ctv:cursor-pointer ctv:overflow-hidden ctv:rounded',
+              'ctv-hover-host ctv:relative ctv:flex ctv:flex-col ctv:p-0 ctv:cursor-pointer ctv:overflow-hidden ctv:rounded',
               'ctv:bg-secondary-background ctv:border ctv:[font-family:inherit]',
               isBatchAdded(group.id, i)
                 ? 'ctv:border-primary-background'
@@ -66,8 +73,9 @@
             :title="$t('imageRefs.batchItem', { n: i + 1 })"
             @click="$emit('select-batch', group.id, i)"
           >
-            <img
+            <ThumbImg
               :src="url"
+              :thumb-max="THUMB_TILE"
               loading="lazy"
               :class="['ctv:block ctv:w-full ctv:aspect-square ctv:object-cover',
                        isBatchAdded(group.id, i) ? 'ctv:opacity-55' : '']"
@@ -81,6 +89,11 @@
             <span class="ctv:w-full ctv:truncate ctv:py-0.5 ctv:px-1 ctv:text-left ctv:text-3xs ctv:text-muted-foreground">
               #{{ i + 1 }}
             </span>
+            <ViewFullButton
+              class="ctv:top-0.5 ctv:left-0.5"
+              :items="batchLightboxItems(group)"
+              :index="i"
+            />
           </button>
         </div>
       </div>
@@ -122,6 +135,13 @@
         :title="$t('promptAssets.upload')"
         @click="fileInput?.click()"
       ><IconUpload class="ctv:size-3.5" /></button>
+      <button
+        v-if="!hasBatch"
+        type="button"
+        :class="closeBtnClass"
+        :title="$t('promptAssets.close')"
+        @click="$emit('close')"
+      ><i class="pi pi-times" /></button>
       <input
         ref="fileInput"
         type="file"
@@ -144,7 +164,7 @@
           :key="asset.id"
           type="button"
           :class="[
-            'ctv:relative ctv:flex ctv:flex-col ctv:p-0 ctv:cursor-pointer ctv:overflow-hidden ctv:rounded',
+            'ctv-hover-host ctv:relative ctv:flex ctv:flex-col ctv:p-0 ctv:cursor-pointer ctv:overflow-hidden ctv:rounded',
             'ctv:bg-secondary-background ctv:border ctv:[font-family:inherit]',
             isAdded(asset.id)
               ? 'ctv:border-primary-background'
@@ -153,23 +173,35 @@
           :title="asset.name"
           @click="$emit('select', asset)"
         >
-          <video
+          <div
             v-if="asset.media_type === 'video'"
-            :src="asset.payload_url"
-            muted
-            playsinline
-            preload="metadata"
-            :class="['ctv:block ctv:w-full ctv:aspect-square ctv:object-cover ctv:bg-black ctv:pointer-events-none',
+            :class="['ctv:relative ctv:w-full ctv:aspect-square ctv:bg-black ctv:pointer-events-none',
                      isAdded(asset.id) ? 'ctv:opacity-55' : '']"
-          />
+          >
+            <ThumbImg
+              :src="asset.payload_url"
+              :thumb-max="THUMB_TILE"
+              :alt="asset.name"
+              loading="lazy"
+              class="ctv:block ctv:size-full ctv:object-cover"
+              draggable="false"
+            />
+            <i class="pi pi-play-circle ctv:absolute ctv:bottom-0.5 ctv:right-0.5 ctv:text-xs ctv:text-white/80 ctv:drop-shadow" />
+          </div>
           <div
             v-else-if="asset.media_type === 'audio'"
             :class="['ctv:flex ctv:items-center ctv:justify-center ctv:w-full ctv:aspect-square ctv:text-muted-foreground',
                      isAdded(asset.id) ? 'ctv:opacity-55' : '']"
           ><i class="pi pi-volume-up ctv:text-lg" /></div>
-          <img
+          <div
+            v-else-if="asset.media_type === 'text'"
+            :class="['ctv:flex ctv:items-center ctv:justify-center ctv:w-full ctv:aspect-square ctv:text-muted-foreground',
+                     isAdded(asset.id) ? 'ctv:opacity-55' : '']"
+          ><i class="pi pi-file ctv:text-lg" /></div>
+          <ThumbImg
             v-else
             :src="assetPreviewUrl(asset)"
+            :thumb-max="THUMB_TILE"
             :alt="asset.name"
             loading="lazy"
             :class="['ctv:block ctv:w-full ctv:aspect-square ctv:object-cover',
@@ -184,6 +216,12 @@
           <span class="ctv:w-full ctv:truncate ctv:py-0.5 ctv:px-1 ctv:text-left ctv:text-3xs ctv:text-muted-foreground">
             {{ asset.name || '—' }}
           </span>
+          <ViewFullButton
+            v-if="asset.media_type === 'image'"
+            class="ctv:top-0.5 ctv:left-0.5"
+            :items="libraryLightboxItems"
+            :index="libraryLightboxIndex(asset)"
+          />
         </button>
       </div>
     </div>
@@ -196,9 +234,13 @@ import { computed, onMounted, ref } from 'vue'
 
 import type { Asset } from '@/api/schemas'
 import ComfyTVSelect from '@/components/widgets/ComfyTVSelect.vue'
+import ThumbImg from '@/components/widgets/ThumbImg.vue'
+import ViewFullButton from '@/components/ViewFullButton.vue'
 import { importAssetFiles } from '@/composables/sidebar/assetImport'
 import { toastLoaderUploadFailed, useLoaderFileDrop } from '@/composables/stages/useLoaderFileDrop'
 import { assetPreviewUrl } from '@/utils/assetMedia'
+import { TEXT_FILE_EXTENSIONS } from '@/utils/mediaFileTypes'
+import { THUMB_TILE } from '@/utils/thumbUrl'
 import { useAssetPicker } from '@/composables/stages/useAssetPicker'
 
 const props = defineProps<{
@@ -226,9 +268,29 @@ function isBatchAdded(groupId: string, index: number): boolean {
   return (props.addedBatchKeys ?? []).includes(`${groupId}:${index}`)
 }
 
+function batchLightboxItems(group: { label: string; urls: string[] }) {
+  return group.urls.map((url, i) => ({ url, label: `${group.label} #${i + 1}` }))
+}
+
+const libraryImageAssets = computed(() =>
+  filtered.value.filter((a) => a.media_type === 'image'))
+const libraryLightboxItems = computed(() =>
+  libraryImageAssets.value.map((a) => ({ url: a.payload_url, label: a.name })))
+
+function libraryLightboxIndex(asset: Asset): number {
+  return Math.max(0, libraryImageAssets.value.findIndex((a) => a.id === asset.id))
+}
+
 const groupBtnClass = [
   'ctv:inline-flex ctv:items-center ctv:justify-center ctv:size-4.5 ctv:cursor-pointer ctv:[font-family:inherit]',
   'ctv:rounded-sm ctv:border ctv:border-transparent ctv:text-3xs ctv:leading-none',
+  'ctv:bg-transparent ctv:text-muted-foreground',
+  'ctv:hover:bg-secondary-background-hover ctv:hover:text-base-foreground',
+].join(' ')
+
+const closeBtnClass = [
+  'ctv:inline-flex ctv:items-center ctv:justify-center ctv:size-6 ctv:shrink-0 ctv:cursor-pointer ctv:[font-family:inherit]',
+  'ctv:rounded-sm ctv:border ctv:border-transparent ctv:text-xs ctv:leading-none',
   'ctv:bg-transparent ctv:text-muted-foreground',
   'ctv:hover:bg-secondary-background-hover ctv:hover:text-base-foreground',
 ].join(' ')
@@ -248,7 +310,9 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const uploading = ref(false)
 
 const uploadAccept = computed(() =>
-  (props.mediaTypes ?? ['image']).map(t => `${t}/*`).join(','),
+  (props.mediaTypes ?? ['image'])
+    .map(t => (t === 'text' ? TEXT_FILE_EXTENSIONS.join(',') : `${t}/*`))
+    .join(','),
 )
 
 const {

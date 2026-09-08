@@ -6,7 +6,7 @@ vi.mock('@/composables/widgets/useProxiedVideoUrl', () => ({
   autoProxyOutput: (...a: unknown[]) => (autoProxyOutput as (...x: unknown[]) => unknown)(...a),
 }))
 
-import { useStageStore, computePickedImageUrl, computePickedFromBatch, imagePoolCount, mergeImagePool, toImagePoolJson, removeImageFromPool, type StageState } from './stageStore'
+import { useStageStore, computePickedImageUrl, computePickedFromBatch, imagePoolCount, mergeImagePool, nextPickerPool, toImagePoolJson, removeImageFromPool, type StageState } from './stageStore'
 
 function freshState(overrides: Partial<StageState> = {}): StageState {
   return {
@@ -522,6 +522,21 @@ describe('mergeImagePool', () => {
   })
 })
 
+describe('nextPickerPool', () => {
+  const img = (url: string) => ({ index: '1', image_url: url, label: url })
+  const pool = (...urls: string[]) => JSON.stringify({ images: urls.map(img) })
+  const urls = (json: string) =>
+    (JSON.parse(json).images as Array<{ image_url: string }>).map(i => i.image_url)
+
+  it('append mode merges the incoming batch into the pool', () => {
+    expect(urls(nextPickerPool(pool('a', 'b'), pool('c'), true))).toEqual(['c', 'a', 'b'])
+  })
+
+  it('replace mode keeps only the incoming batch', () => {
+    expect(urls(nextPickerPool(pool('a', 'b'), pool('c'), false))).toEqual(['c'])
+  })
+})
+
 describe('removeImageFromPool', () => {
   const img = (url: string) => ({ index: '1', image_url: url, label: url })
   const pool = (...urls: string[]) => JSON.stringify({ images: urls.map(img) })
@@ -700,5 +715,48 @@ describe('computePickedFromBatch', () => {
       clips: [{ index: 1, image_url: 'clip1.mp4' }, { index: 2, image_url: 'clip2.mp4' }],
     })
     expect(computePickedFromBatch(batch, 2)).toBe('clip2.mp4')
+  })
+
+  it('picks a bare single-image URL once wrapped by toImagePoolJson', () => {
+    const url = '/view?filename=ComfyUI_00414_.png&subfolder=&type=output'
+    expect(computePickedFromBatch(toImagePoolJson(url), 1)).toBe(url)
+  })
+})
+
+describe('stageStore.notifyConsumers', () => {
+  beforeEach(() => setActivePinia(createPinia()))
+
+  function graphWith(nodes: any[], links: Array<[number, number, number]>) {
+    const map = new Map<number, any>()
+    links.forEach(([id, from, to]) => map.set(id, { id, origin_id: from, origin_slot: 0, target_id: to }))
+    const graph = { links: map, getNodeById: (id: number) => nodes.find(n => n.id === id) }
+    for (const n of nodes) n.graph = graph
+    return graph
+  }
+
+  it('refreshes only direct consumers, through chainable fx', () => {
+    const store = useStageStore()
+    const src: any = { id: 1, outputs: [{ links: [10] }] }
+    const fx: any = { id: 2, type: 'ComfyTV.GlowStage', inputs: [], outputs: [{ links: [11] }] }
+    const sink: any = { id: 3, outputs: [] }
+    const other: any = { id: 4, outputs: [] }
+    graphWith([src, fx, sink, other], [[10, 1, 2], [11, 2, 3]])
+    const state = store.registerStage(src, 'video')
+    const calls: number[] = []
+    store.setRefresher(fx, () => calls.push(2))
+    store.setRefresher(sink, () => calls.push(3))
+    store.setRefresher(other, () => calls.push(4))
+    const tick = store.stateTick
+    store.setOutputSlot(state, 0, '/view?filename=a.mp4')
+    expect(calls).toEqual([2, 3])
+    expect(store.stateTick).toBe(tick)
+  })
+
+  it('falls back to the global tick without a graph', () => {
+    const store = useStageStore()
+    const state = store.registerStage({ id: 9 }, 'video')
+    const tick = store.stateTick
+    store.setOutputSlot(state, 0, 'x')
+    expect(store.stateTick).toBe(tick + 1)
   })
 })

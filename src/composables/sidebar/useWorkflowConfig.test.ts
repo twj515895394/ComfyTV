@@ -12,8 +12,12 @@ vi.mock('@/composables/stages/useWorkflowPrep', () => ({
 vi.mock('@/composables/dialog/useConfirmDialog', () => ({
   askConfirm: vi.fn(async () => true),
 }))
+vi.mock('@/composables/useOpenInComfy', () => ({
+  tryOpenWorkflowInComfy: vi.fn(async () => true),
+}))
 
 import { askConfirm } from '@/composables/dialog/useConfirmDialog'
+import { tryOpenWorkflowInComfy } from '@/composables/useOpenInComfy'
 
 const jsonResp = (data: any, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(data), {
@@ -465,5 +469,30 @@ describe('useWorkflowConfig', () => {
     await postMeta({ description: 'edited' })
     expect(loadError.value).toContain('save failed')
     expect(loadError.value).toContain('500')
+  })
+
+  it('onOpenInComfy forwards the loaded config and clears the busy flag', async () => {
+    const payload = {
+      id: 7, kind: 'image', label: 'X', link_type: 1,
+      file_path: '/comfy/user/default/workflows/x.json',
+      has_api: true, description: null, gui_notes: [], exposed_widgets: [],
+    }
+    ;(app as any).api.fetchApi.mockResolvedValueOnce(jsonResp(payload))
+    const { loadConfig, onOpenInComfy, openInComfyBusy } = useWorkflowConfig(t)
+    await loadConfig('image', 'X')
+    await onOpenInComfy()
+    expect(tryOpenWorkflowInComfy).toHaveBeenCalledWith(expect.objectContaining({
+      kind: 'image',
+      label: 'X',
+      link_type: 1,
+      file_path: '/comfy/user/default/workflows/x.json',
+    }))
+    expect(openInComfyBusy.value).toBe(false)
+  })
+
+  it('onOpenInComfy is a no-op before a config is loaded', async () => {
+    const { onOpenInComfy } = useWorkflowConfig(t)
+    await onOpenInComfy()
+    expect(tryOpenWorkflowInComfy).not.toHaveBeenCalled()
   })
 })

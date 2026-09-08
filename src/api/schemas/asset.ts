@@ -28,6 +28,7 @@ export const AssetSchema = z.object({
   metadata:    z.record(z.string(), z.unknown()).default({}),
   created_at:  z.string().nullable().optional(),
   updated_at:  z.string().nullable().optional(),
+  file_missing: z.boolean().optional(),
 })
 export type Asset = z.infer<typeof AssetSchema>
 export const ListAssetsSchema = z.object({
@@ -46,3 +47,5 @@ export const AdoptAssetsSchema = z.object({
   dir: z.string(),
 })
 export type AdoptAssetsResult = z.infer<typeof AdoptAssetsSchema>
+
+export const AssetEnvelopeSchema = z.object({ asset: AssetSchema })

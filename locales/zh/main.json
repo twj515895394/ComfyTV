@@ -1,8 +1,254 @@
 {
+  "pentradoActions": {
+    "capture": "截图输出",
+    "captureHint": "合成图层并输出到节点",
+    "saveToLibraryHint": "导出 PSD 到资产库"
+  },
   "dialog": {
     "confirm": "确定",
     "cancel": "取消",
     "close": "关闭"
+  },
+  "v2": {
+    "meta": {
+      "fps": "{n} fps",
+      "silent": "无音轨",
+      "mono": "单声道",
+      "stereo": "立体声",
+      "channels": "{n} 声道",
+      "frames": "{n} 帧",
+      "genTime": "生成耗时 {t}"
+    },
+    "genopt": {
+      "resolution": "清晰度",
+      "ratio": "比例",
+      "count": "生成数量"
+    },
+    "panelCollapse": "收起面板——只保留一行信息和运行按钮",
+    "panelExpand": "展开面板",
+    "imageStageTitle": "图片节点 · ImageStage",
+    "pickerTitle": "图片选择 · Picker",
+    "cropTitle": "裁剪 · 编辑",
+    "ed": {
+      "rotate": "旋转 · 编辑",
+      "mirror": "镜像 · 编辑",
+      "grade": "调色 · 编辑",
+      "compare": "对比 · 编辑",
+      "gridSplit": "宫格切分 · 编辑",
+      "compareHint": "接入 A、B 两张图开始对比",
+      "wired": "已接入",
+      "empty": "未接入"
+    },
+    "stageHint": "连入参考，点 ↑ 生成",
+    "pickerHint": "连入上游批次，点选一张",
+    "cropHint": "连入上游图片开始裁剪",
+    "batchCount": "{n}张",
+    "batchPos": "{i}/{n}张",
+    "refsCount": "{n} 个引用",
+    "poolCount": "池内 {n} 张",
+    "clear": "清空",
+    "linkWorkflow": "关联工作流",
+    "videoColorTitle": "调色 · Video FX",
+    "videoCurvesTitle": "曲线 · Video FX",
+    "fxChainTitle": "FX 链 · 出片",
+    "renderChain": "渲染整链",
+    "outputLabel": "成片",
+    "livePreview": "实时",
+    "fxChainHint": "连入上游视频即可预览整链",
+    "scene3dTitle": "3D 场景 · 编辑台",
+    "relightTitle": "打光 · 光球",
+    "applying": "应用中…",
+    "appliedLive": "已应用 · 下游实时",
+    "dragToApply": "拖框即应用",
+    "loaderHint": "拖入文件，或点击上传",
+    "loaderEmpty": "未加载内容",
+    "assetLoaderHint": "点击从资产库选择",
+    "assetLoaderEmpty": "未选择资产",
+    "params": "参数",
+    "generatorHint": "点 ↑ 生成",
+    "change": "更换",
+    "upload": "上传",
+    "renameHint": "双击重命名",
+    "removeItem": "移除",
+    "moreActions": "更多",
+    "fx": {
+      "lut": "LUT · 调色",
+      "selectiveColor": "选择性色彩 · 调色",
+      "cdl": "CDL · 调色",
+      "histogramEq": "直方图均衡 · 调色",
+      "awb": "自动白平衡 · 调色",
+      "pseudocolor": "伪彩色 · 调色",
+      "hueCorrect": "色相修正 · 调色",
+      "select0r": "二级校色 · 调色",
+      "keyer": "键控 · 抠像",
+      "pik": "IBK 键控 · 抠像",
+      "despill": "去溢色 · 抠像",
+      "colorSuppress": "色彩抑制 · 抠像",
+      "matteMorph": "遮罩形态 · 抠像",
+      "shapeMask": "形状遮罩 · 抠像",
+      "lensDistort": "镜头畸变 · 光学",
+      "chromaticAberration": "镜头色差 · 光学",
+      "lensFlare": "镜头光晕 · 光学",
+      "glow": "辉光 · 光学",
+      "godRays": "体积光 · 光学",
+      "blurSharpen": "模糊与锐化 · 修复",
+      "denoise": "降噪 · 修复",
+      "deinterlace": "去隔行 · 修复",
+      "posterize": "色调分离 · 风格",
+      "oldFilm": "老电影 · 风格",
+      "artFx": "艺术画风 · 风格",
+      "glitch": "故障艺术 · 风格",
+      "kaleidoscope": "万花筒 · 风格",
+      "waveWarp": "波纹扭曲 · 风格",
+      "strobe": "频闪 · 风格",
+      "feedback": "拖影反馈 · 风格",
+      "regrain": "胶片颗粒 · 风格",
+      "stylize": "快速滤镜 · 风格",
+      "chromaShift": "通道错位 · 风格",
+      "transform": "变换 · 几何",
+      "video360": "360 全景 · 几何",
+      "card3d": "3D 卡片 · 几何",
+      "particles": "粒子 · 特效",
+      "water": "水面 · 特效",
+      "lightGraffiti": "光绘 · 特效",
+      "trim": "修剪 · 剪辑",
+      "vcrop": "画面裁切 · 剪辑",
+      "vsplit": "分割 · 剪辑",
+      "concat": "拼接 · 剪辑",
+      "speed": "变速 · 剪辑",
+      "rotate": "旋转翻转 · 剪辑",
+      "volume": "音量 · 剪辑",
+      "muxAudio": "合成音轨 · 剪辑",
+      "resize": "缩放 · 剪辑",
+      "frames": "逐帧抽取 · 剪辑",
+      "timeRemap": "时间重映射 · 剪辑",
+      "sequence": "片段序列 · 剪辑",
+      "sceneDetect": "场景检测 · 剪辑",
+      "chromaKey": "色度抠像 · 合成",
+      "composite": "叠加合成 · 合成",
+      "cornerPin": "四角定位 · 合成",
+      "rotoMask": "手绘遮罩 · 合成",
+      "keyMix": "键混合 · 合成",
+      "matteMonitor": "遮罩监视 · 合成",
+      "maskPropagate": "遮罩追踪 · 合成",
+      "paintStroke": "笔迹绘制 · 合成",
+      "stmap": "UV 重映射 · 合成",
+      "stmapGen": "STMap 生成 · 合成",
+      "zDefocus": "深度散景 · 合成",
+      "frameBlend": "帧混合 · 合成",
+      "transition": "交叉转场 · 转场",
+      "lumaWipe": "亮度擦除 · 转场",
+      "stabilize": "视频稳定 · 修复",
+      "stabilizePro": "专业稳定 · 修复",
+      "stabilize360": "360 稳定 · 修复",
+      "interpolate": "补帧 · 修复",
+      "faceBlur": "人脸打码 · 修复",
+      "spotRemover": "污点移除 · 修复",
+      "scopes": "示波器 · 监看",
+      "contactSheet": "审片宫格 · 监看",
+      "audioMeter": "电平表 · 监看",
+      "title": "标题 · 图文",
+      "subtitle": "字幕 · 图文",
+      "annotate": "标注 · 图文",
+      "kenBurns": "静照运镜 · 特效",
+      "slitScan": "狭缝扫描 · 特效"
+    },
+    "rich": {
+      "score": "乐谱 · 音乐",
+      "scoreEditor": "打谱器 · 音乐",
+      "midiEditor": "MIDI 编辑 · 音乐",
+      "expression": "表达式 · 动画",
+      "motionTrack": "运动跟踪 · 动画",
+      "pattern": "图案发生 · 生成",
+      "panorama": "全景 · 360",
+      "panoView": "当前视角 · 360",
+      "panoMulti": "多视角 · 360",
+      "storyboard": "故事板 · 叙事",
+      "storyboardEditor": "故事板工作台 · 叙事",
+      "layerEditor": "图层编辑器 · 图像",
+      "material": "材质球 · 3D",
+      "modelLoader": "加载模型 · 3D",
+      "meshPrimitive": "基元 · 3D",
+      "meshOp": "网格加工 · 3D",
+      "meshBake": "烘焙贴图 · 3D",
+      "meshBoolean": "布尔 · 3D",
+      "lineArt": "线稿 · 图像",
+      "poster": "排版 · 图像",
+      "splitPart": "部件分割 · 图像",
+      "erase": "擦除 · 涂抹",
+      "inpaint": "局部重绘 · 涂抹",
+      "outpaint": "扩图 · 涂抹",
+      "multiangle": "多角度 · 图像",
+      "director": "导演台 · 剪辑"
+    },
+    "afx": {
+      "dynamics": "压缩器 · 动态",
+      "loudness": "响度 · 动态",
+      "duck": "闪避 · 动态",
+      "eq": "均衡器 · 音色",
+      "saturate": "饱和 · 音色",
+      "modulation": "调制 · 音色",
+      "echo": "回声 · 音色",
+      "stereo": "声场 · 音色",
+      "timePitch": "变速变调 · 音色",
+      "denoise": "降噪 · 修复",
+      "noiseReduction": "谱门控 · 修复",
+      "repair": "修复工具 · 修复",
+      "convolve": "卷积混响 · 空间",
+      "deconvolve": "逆卷积 · 空间",
+      "museReverb": "算法混响 · 空间",
+      "mix": "调音台 · 混音",
+      "crossfade": "交叉淡化 · 混音",
+      "stemSplit": "分轨 · 混音",
+      "demuxAudio": "抽出音轨 · 混音",
+      "demuxVideo": "抽出画面 · 混音",
+      "clip": "修剪 · 剪辑",
+      "split": "分割 · 剪辑",
+      "analyze": "分析 · 监测",
+      "mir": "乐理探测 · 监测",
+      "visualize": "频谱图 · 监测",
+      "segmentExport": "分段导出 · 监测",
+      "reactive": "节奏打点 · 监测",
+      "sweep": "扫频 · 合成",
+      "sf2": "音源渲染 · 合成",
+      "clickTrack": "节拍轨 · 合成",
+      "chordAccomp": "和弦伴奏 · 合成",
+      "scoreToMidi": "乐谱演奏 · 合成",
+      "demuxAudioHint": "从视频中抽出音轨",
+      "demuxVideoHint": "去掉声音，只留画面"
+    },
+    "customParams": {
+      "title": "工作流参数",
+      "add": "添加",
+      "addHint": "挂载绑定工作流暴露的自定义参数",
+      "remove": "移除参数"
+    },
+    "ctl": {
+      "duration": "时长（秒）",
+      "generateAudio": "生成伴音",
+      "lyrics": "歌词",
+      "bpm": "BPM",
+      "timeSignature": "拍号",
+      "keyScale": "调式",
+      "language": "语言",
+      "voice": "音色",
+      "speed": "语速",
+      "referenceText": "参考文本",
+      "variantCount": "变体数量"
+    },
+    "toolbar": {
+      "hd": "高清",
+      "expand": "扩图",
+      "angles": "多角度",
+      "relight": "打光",
+      "redraw": "重绘",
+      "erase": "擦除",
+      "cutout": "抠图",
+      "grid": "宫格切分",
+      "panorama": "全景",
+      "crop": "裁剪",
+      "download": "下载"
+    }
   },
   "workflow": {
     "uploadButton": "⬆ 上传工作流",
@@ -17,6 +263,8 @@
     "running": "运行中…",
     "cancel": "取消",
     "preparingWorkflow": "准备工作流中…",
+    "noWorkflowShort": "没有可用工作流 — 请上传 / 链接",
+    "noWorkflowInstalled": "没有可用的 {kind} 工作流 — 用卡片上的上传 / 链接按钮导入一个，或到侧栏 ComfyTV → Stages 里添加。",
     "outputDurationHint": "生成耗时",
     "section": {
       "context": "上游输入",
@@ -29,7 +277,10 @@
       "clearHint": "清空图片池并重置选择",
       "confirmClear": "确认清空？",
       "confirm": "是",
-      "cancel": "否"
+      "cancel": "否",
+      "modeAppend": "模式:追加",
+      "modeReplace": "模式:覆盖",
+      "modeHint": "新结果进池方式(点击切换)。追加:保留已有并把新结果放到最前;覆盖:每次运行只保留最新一批。相同图片只保留一份(按图片去重)。"
     },
     "empty": {
       "no_output": "暂无输出",
@@ -58,6 +309,7 @@
       "viewFull": "查看大图",
       "download": "下载",
       "copyText": "复制文本",
+      "saveTextAsset": "存入资产库",
       "renderMarkdown": "渲染 Markdown",
       "showRawText": "显示原文",
       "addTag": "存入资产库 / 打标签",
@@ -75,17 +327,71 @@
     "cancelled": "已取消",
     "upstreamNotReady": "上游未就绪",
     "upstreamNotReadyDetail": "上游未就绪:{list}。请先运行这些 stage 生成快照,然后再运行此 stage。",
+    "droppedFromQueue": "尚未运行就被移出队列 — 队列被清空或该任务被删除。",
     "workerDied": "后端未返回结果就停止了。prompt worker 可能已崩溃(通常是清理阶段 CUDA OOM)。重启 ComfyUI 后恢复。"
+  },
+  "eagle": {
+    "title": "Eagle 素材库",
+    "refresh": "刷新",
+    "search": "搜索名称或标签…",
+    "loading": "加载中…",
+    "empty": "没有条目",
+    "loadMore": "加载更多",
+    "disabledHint": "Eagle 集成未启用。到「设置」页打开「启用 Eagle 集成」,并钉死 ComfyTV 专用的 .library 路径。",
+    "pendingBanner": "有 {n} 条待发送到 Eagle(等待打开钉死的库)",
+    "flushNow": "立即补发",
+    "flushing": "补发中…",
+    "mode": {
+      "api": "在线",
+      "disk": "只读",
+      "offline": "离线",
+      "disabled": "未启用"
+    },
+    "hint": {
+      "disk": "Eagle 未运行或打开了别的库:正在直接读取磁盘上的库(只读)。发送会排队,等库打开后自动补发。",
+      "offline": "找不到 Eagle:应用未运行,钉死的库路径也不可达。检查设置里的库路径。"
+    },
+    "folder": {
+      "all": "全部文件夹"
+    },
+    "ai": {
+      "label": "AI",
+      "tooltip": "AI 语义搜索(需要 Eagle 的 AI Search 插件):按含义搜图而非按名称"
+    },
+    "similar": {
+      "action": "找相似",
+      "banner": "与「{name}」相似的条目",
+      "clear": "清除",
+      "failed": "相似搜索失败"
+    },
+    "import": {
+      "action": "导入到资产库",
+      "done": "已导入「{name}」",
+      "existed": "「{name}」已在资产库",
+      "failed": "导入失败"
+    },
+    "send": {
+      "action": "发送到 Eagle",
+      "sent": "已发送到 Eagle:{name}",
+      "queued": "Eagle 未就绪,已排队({n} 条待发)",
+      "failed": "发送失败"
+    },
+    "flush": {
+      "done": "已补发 {n} 条到 Eagle",
+      "failed": "{n} 条补发失败"
+    }
   },
   "sidebar": {
     "tab": {
       "workflow": "工作流",
       "assets": "资产库",
+      "eagle": "Eagle",
       "entries": "条目",
       "params": "Stage 管理",
       "presets": "预设",
       "resources": "资源",
       "servers": "服务器",
+      "collab": "协作",
       "settings": "设置"
     }
   },
@@ -95,6 +401,19 @@
     "loading": "加载中…",
     "save": "保存",
     "saving": "保存中…",
+    "search": "搜索设置…",
+    "noMatch": "没有匹配的设置项",
+    "experimental": "实验性",
+    "reset": "恢复默认",
+    "on": "开",
+    "off": "关",
+    "status": { "checking": "检测中…", "online": "已连接", "offline": "未连接" },
+    "blender": {
+      "section": "Blender 桥接"
+    },
+    "general": {
+      "section": "通用"
+    },
     "backup": {
       "section": "数据库备份",
       "now": "立即备份",
@@ -103,6 +422,20 @@
       "failed": "备份失败:{error}"
     },
     "fields": {
+      "enable-v2": {
+        "label": "启用 ComfyTV V2 节点",
+        "desc": "实验性功能，可能存在不稳定行为。已迁移的 stage 以内容导向的 V2 外壳渲染。必须先在 ComfyUI 本体设置中开启 Node 2.0（Vue 节点模式）。修改后需刷新页面。"
+      },
+      "v2-lod-scale": {
+        "label": "海报图模式阈值",
+        "desc": "画布缩放低于此值时，V2 卡片收起为缩略图并显示播放/放大按钮；放大越过阈值后面板恢复。",
+        "options": { "30": "30%", "42": "42%", "50": "50%", "60": "60%" }
+      },
+      "v2-lod-fill": {
+        "label": "海报图底",
+        "desc": "缩略图留白部分用什么填充：图片预览同款棋盘格，或同一张画面压暗后铺满整卡。",
+        "options": { "checker": "棋盘格", "image": "同图压暗铺满" }
+      },
       "enable-db-backup": {
         "label": "启动时自动备份",
         "desc": "每次服务器启动时(在任何迁移执行之前)备份 ComfyTV 数据目录(数据库 + 工作流)。"
@@ -115,7 +448,106 @@
         "label": "备份位置",
         "desc": "留空则使用 ComfyTV 目录下的 db-backup 文件夹。快照以时间戳命名,如 20260805-093000/comfytv。",
         "placeholder": "如 D:\\backups\\comfytv"
+      },
+      "enable-mcp": {
+        "label": "启用 MCP 服务",
+        "desc": "开放 ComfyTV 的 MCP 端点(/comfytv/mcp),允许 agent 读取并操作画布。默认关闭。"
+      },
+      "enable-bot": {
+        "label": "启用 ComfyTV Bot",
+        "desc": "显示内嵌 Bot 侧边栏及其聊天接口。前置条件:先启用 MCP 服务。"
+      },
+      "bot-model-claude-code": {
+        "label": "Claude Code 模型",
+        "desc": "Bot 回合传给 claude --model 的模型,支持别名(sonnet、opus、haiku)或完整模型 id。留空 = CLI 自己的默认。",
+        "placeholder": "CLI 默认"
+      },
+      "bot-model-codex": {
+        "label": "Codex 模型",
+        "desc": "Bot 回合传给 codex -m 的模型。留空 = CLI 自己的默认。",
+        "placeholder": "CLI 默认"
+      },
+      "bot-model-qwen-code": {
+        "label": "Qwen Code 模型",
+        "desc": "Bot 回合传给 qwen -m 的模型。留空 = 用 qwen 自己设置里选的模型。",
+        "placeholder": "CLI 默认"
+      },
+      "bot-model-local-llm": {
+        "label": "Local LLM 模型",
+        "desc": "本地端点上的模型 id。留空 = 用端点报告的第一个模型。",
+        "placeholder": "自动取第一个"
+      },
+      "bot-model-comfyui-llm": {
+        "label": "ComfyUI LLM 模型",
+        "desc": "实验性 — 玩具性质的 provider,一般情况不要用,请改用 Local LLM 或 CLI 类 provider。Bot 回合使用的 models/text_encoders 里的文本编码器权重(Qwen3 或 Gemma 系)。留空 = 自动取第一个可生成的权重。推理跑在 ComfyUI 本体内 — 无需外部服务。",
+        "placeholder": "自动取第一个"
+      },
+      "bot-comfyui-llm-thinking": {
+        "label": "ComfyUI LLM 思考模式",
+        "desc": "实验性 — 只对玩具性质的 ComfyUI LLM provider 生效。让 Qwen3 系模型先在隐藏的 <think> 块里推理再回答。工具调用明显更聪明,代价是每轮多花一些生成时间。"
+      },
+      "bot-local-llm-url": {
+        "label": "Local LLM 端点",
+        "desc": "本地模型服务的 OpenAI 兼容 base URL(LM Studio、llama.cpp 的 llama-server、vLLM、Ollama 等)。不填时 Local LLM provider 不可用。仅限免 key 的本地端点 — 永远不存 API key。",
+        "placeholder": "http://127.0.0.1:1234/v1"
+      },
+      "bot-enable-comfy-mcp": {
+        "label": "挂载 comfy-mcp",
+        "desc": "在 bot 会话中同时挂载官方 comfy-mcp(只读工具集:节点目录、工作流校验、模型/模板搜索)。仅 Claude Code 和 Qwen Code — Codex 与 Local LLM 保持只挂 comfytv。"
+      },
+      "bot-comfy-mcp-command": {
+        "label": "comfy-mcp 命令",
+        "desc": "启动 comfy-mcp stdio 服务的命令。留空 = 在 PATH 上找 comfy-mcp。",
+        "placeholder": "comfy-mcp"
+      },
+      "bot-always-allow-runs": {
+        "label": "总是允许 bot 运行",
+        "desc": "不弹运行审批卡,bot 直接执行(默认行为)。关闭后,切到询问模式的会话才会在每次运行前等你批准。"
+      },
+      "enable-skills": {
+        "label": "启用 Agent Skills",
+        "desc": "把已安装的技能通过 MCP(skill 工具 + prompts)提供给外部 agent 和内嵌 bot。"
+      },
+      "enable-collab": {
+        "label": "启用多人协作",
+        "desc": "实验性功能——请勿在生产环境依赖。局域网内的实时多人 presence 与共同编辑。关闭时协作代码完全不运行（无会话、无 WebSocket、无 UI）。修改后需刷新已打开的页面。"
+      },
+      "enable-eagle": {
+        "label": "启用 Eagle 集成",
+        "desc": "把本机的 Eagle(eagle.cool)素材库接入 ComfyTV:侧边栏出现 Eagle 面板,资产可发送到 Eagle。需要 Eagle 桌面应用。"
+      },
+      "eagle-api-url": {
+        "label": "Eagle API 地址",
+        "desc": "Eagle 本地 API 的地址,默认端口 41595。仅本机访问,不需要 token。",
+        "placeholder": "http://127.0.0.1:41595"
+      },
+      "eagle-library-path": {
+        "label": "钉死的资源库路径",
+        "desc": "ComfyTV 专用的 .library 目录。发送只在 Eagle 打开该库时进行(否则排队),浏览在 Eagle 关闭或切到别的库时直接读磁盘。留空 = 跟随 Eagle 当前打开的库(不推荐)。",
+        "placeholder": "如 Y:\\Eagle资源库\\ComfyTV资源库.library"
+      },
+      "eagle-send-folder": {
+        "label": "发送目标文件夹",
+        "desc": "手动发送到 Eagle 时归入的文件夹名,不存在会自动创建。留空 = 库根目录。自动沉淀按项目名分文件夹,不走此设置。"
+      },
+      "eagle-auto-send": {
+        "label": "产出自动沉淀到 Eagle",
+        "desc": "每个 stage 的产出(图片/视频/音频)自动归档进 Eagle:按项目名分文件夹,annotation 带完整生成参数(prompt/模型等),tag 带项目名。走排队机制,Eagle 没开时攒着,不阻塞生成。"
+      },
+      "blender-bridge-url": {
+        "label": "Blender 桥接地址",
+        "desc": "实验性 — 会有毛边。Blender Scene / Camera / Animation 这几个 stage 连接的 blender-web 桥接服务地址。用 blender-for-comfytv.bat 启动;桥接没响应时这些 stage 不可用。默认端口 7684,仅限本机。",
+        "placeholder": "http://127.0.0.1:7684"
       }
+    },
+    "agent": {
+      "section": "Agent 与 MCP"
+    },
+    "eagle": {
+      "section": "Eagle 集成"
+    },
+    "collab": {
+      "section": "多人协作"
     }
   },
   "servers": {
@@ -192,6 +624,11 @@
     "defaultSet": "{label} 已设为该 Stage 的默认工作流",
     "defaultCleared": "{label} 已取消默认 —— 将使用列表中的第一个工作流",
     "defaultFailed": "修改默认工作流失败",
+    "hide": "从 Stage 节点隐藏",
+    "unhide": "在 Stage 节点显示",
+    "hiddenSet": "{label} 已从 Stage 节点的 workflow 下拉框隐藏",
+    "hiddenCleared": "{label} 已重新显示在 workflow 下拉框中",
+    "hiddenFailed": "修改工作流可见性失败",
     "section": {
       "workflows": "工作流",
       "params": "参数"
@@ -211,7 +648,9 @@
       "builtin": "内置",
       "builtinHint": "ComfyTV 自带的工作流（git 跟踪）。没有此标记的是用户导入或手动放入的。",
       "default": "默认",
-      "defaultHint": "新添加的该类 Stage 节点会预选此工作流。若它被删除或取消链接，则回退到列表中的第一个。"
+      "defaultHint": "新添加的该类 Stage 节点会预选此工作流。若它被删除或取消链接，则回退到列表中的第一个。",
+      "hidden": "已隐藏",
+      "hiddenHint": "不出现在 Stage 节点的 workflow 下拉框中。已选中它的节点不受影响，仍可正常运行。"
     }
   },
   "assets": {
@@ -237,7 +676,8 @@
       "image": "图片",
       "video": "视频",
       "audio": "音频",
-      "model": "3D 模型"
+      "model": "3D 模型",
+      "text": "文本"
     },
     "category": {
       "all": "全部",
@@ -257,7 +697,11 @@
       "tags": "编辑标签",
       "loadNode": "作为节点添加到画布",
       "makeProxy": "生成预览代理",
-      "more": "更多操作"
+      "more": "更多操作",
+      "playPreview": "试听",
+      "pausePreview": "暂停",
+      "fileMissing": "文件缺失",
+      "fileMissingHint": "本地文件已被删除，资产条目仍保留；可重新导入或从资产库移除"
     },
     "tagPopover": {
       "empty": "还没有分类。",
@@ -268,6 +712,7 @@
     "empty": "资产库中还没有匹配的素材 —— 请先在资产面板中添加。",
     "pickHint": "从资产库中选择一个素材作为该节点的输出。",
     "selected": "已选择：{name}",
+    "fileMissing": "所选资产 {name} 的本地文件已被删除，请重新导入或换一个",
     "upload": "上传文件到资产库并选中最后一个"
   },
   "stageParams": {
@@ -358,6 +803,7 @@
     "upload": "上传图片到资产库并直接使用",
     "tabBatch": "批次",
     "tabLibrary": "资产库",
+    "close": "关闭",
     "empty": "没有匹配的资产 —— 先在侧边栏「资产库」里添加。",
     "missing": "资产 #{id} 已从资产库移除 —— 运行时会忽略这个标记",
     "slotTitle": "参考图槽位",
@@ -483,6 +929,12 @@
         "tooltip": "对已上传/已生成的视频做修改：剪辑 / 高清 / 去字幕 / 音频分离"
       }
     },
+    "audio": {
+      "change": {
+        "label": "修改音频",
+        "tooltip": "处理这段音频：修剪 / 动态 / 均衡 / 降噪 / 混音 / 分析"
+      }
+    },
     "text": {
       "refine": {
         "label": "改写",
@@ -553,6 +1005,16 @@
     "removeTitle": "移除资源",
     "removeConfirm": "从库中移除“{name}”？文件将保留在磁盘上。",
     "missing": "文件缺失"
+  },
+  "skills": {
+    "section": "技能",
+    "hint": "技能是 SKILL.md 指令包,经 MCP 提供给 agent。导入包含单个技能文件夹的 .zip;文件存放在 user/comfytv/skills。",
+    "import": "导入技能 (.zip)",
+    "empty": "尚未安装技能",
+    "remove": "删除",
+    "removeTitle": "删除技能",
+    "removeConfirm": "从磁盘删除技能「{name}」?此操作不可恢复。",
+    "source": { "builtin": "内置", "user": "用户" }
   },
   "presets": {
     "imageVariant": {
@@ -904,6 +1366,33 @@
         "label": "特效链",
         "tooltip": "将多个特效串成一次渲染"
       }
+    },
+    "audioChange": {
+      "clip": { "label": "修剪", "tooltip": "在波形时间线上修剪音频" },
+      "split": { "label": "分割", "tooltip": "在指定点把音频一分为二" },
+      "dynamics": { "label": "压缩器", "tooltip": "压缩 / 门限 / 限幅 / 咝声消除" },
+      "loudness": { "label": "响度", "tooltip": "响度标准化（EBU R128 等）" },
+      "duck": { "label": "闪避", "tooltip": "被侧链人声压低本轨音量" },
+      "eq": { "label": "均衡器", "tooltip": "交互曲线的参数均衡器" },
+      "saturate": { "label": "饱和", "tooltip": "温暖度、过载与软削波" },
+      "modulation": { "label": "调制", "tooltip": "合唱、镶边、移相、颤音、震音" },
+      "echo": { "label": "回声", "tooltip": "延迟与回声预设" },
+      "stereo": { "label": "声场", "tooltip": "声像、宽度与中侧处理" },
+      "time-pitch": { "label": "变速变调", "tooltip": "独立调整速度与音高" },
+      "denoise": { "label": "降噪", "tooltip": "宽带噪声滤除" },
+      "noise-reduction": { "label": "谱门控", "tooltip": "谱门控降噪，可接噪声样本" },
+      "repair": { "label": "修复工具", "tooltip": "去咔哒、去削波、去电流声" },
+      "convolve": { "label": "卷积混响", "tooltip": "用脉冲响应做卷积混响" },
+      "deconvolve": { "label": "逆卷积", "tooltip": "从扫频录音还原脉冲响应" },
+      "muse-reverb": { "label": "算法混响", "tooltip": "FDN 算法混响" },
+      "mix": { "label": "调音台", "tooltip": "最多四轨混音，带增益与声像" },
+      "crossfade": { "label": "交叉淡化", "tooltip": "两轨交叉淡化，可选曲线" },
+      "stem-split": { "label": "分轨", "tooltip": "分离人声、鼓、贝斯与伴奏" },
+      "analyze": { "label": "分析", "tooltip": "响度、统计与静音分析报告" },
+      "mir": { "label": "乐理探测", "tooltip": "检测节拍、起音与音符生成标签" },
+      "visualize": { "label": "频谱图", "tooltip": "渲染波形或频谱图片" },
+      "segment-export": { "label": "分段导出", "tooltip": "检测分段并逐段导出文件" },
+      "reactive": { "label": "节奏打点", "tooltip": "把节拍转成动画关键帧" }
     }
   },
   "shotCell": {
@@ -968,6 +1457,7 @@
     "rotateTooltip": "拖动圆形手柄旋转（Shift = 15° 步进）"
   },
   "videoTrim": {
+    "frameStepHint": "拖动定位 · ←/→ 逐帧微调",
     "noInputVideo": "无输入视频 — 请上游连接一个视频",
     "loading": "加载中…",
     "loadError": "视频加载失败",
@@ -1010,6 +1500,27 @@
     "adjustThenRun": "旋转 / 翻转（预览即时生效），然后 Run"
   },
   "videoSplit": {
+    "splitPoint": "切割点",
+    "splitting": "分割中…",
+    "done": "分割完成 — A、B 两段可供下游使用",
+    "adjustThenRun": "拖动把手确定切割点，然后 Run"
+  },
+  "audioTrim": {
+    "frameStepHint": "拖动定位 · ←/→ 10 毫秒微调",
+    "noInputAudio": "无输入音频 — 请上游连接音频或视频",
+    "loading": "加载中…",
+    "loadError": "音频加载失败",
+    "playSelection": "播放选段",
+    "pause": "暂停",
+    "start": "入点",
+    "end": "出点",
+    "reset": "重置",
+    "resetTooltip": "选中整段音频",
+    "trimming": "剪辑中…",
+    "trimmed": "剪辑完成 — 下游可直接使用",
+    "adjustThenRun": "拖动把手选择范围，然后 Run"
+  },
+  "audioSplit": {
     "splitPoint": "切割点",
     "splitting": "分割中…",
     "done": "分割完成 — A、B 两段可供下游使用",
@@ -1200,7 +1711,11 @@
     "clipPrompt": "片段提示词",
     "workflow": "工作流",
     "sharedRefsHint": "全片的参考资源池。在每个片段的提示词里 {'@'} 该片段要用的参考；一个 {'@'} 都没写的片段会自动使用整个池子。",
-    "kind": { "image": "图片", "video": "视频", "audio": "音频" },
+    "kind": {
+      "image": "图片",
+      "video": "视频",
+      "audio": "音频"
+    },
     "refNotConsumed": "「{workflow}」不消费{kind}参考——运行时会被忽略",
     "refOverLimit": "这个工作流最多消费 {n} 个此类参考——多出的会被忽略",
     "transition": "入场转场",
@@ -1215,7 +1730,12 @@
     "cached": "已缓存——不会重新生成",
     "generated": "本次运行已生成",
     "previewClip": "预览这个片段",
-    "clipPreview": "片段预览"
+    "clipPreview": "片段预览",
+    "play": "播放预览",
+    "pause": "暂停",
+    "playDisabled": "还没有可预览的内容——先运行导演台",
+    "filmPreview": "成片预览",
+    "clipsPreview": "粗剪连播（成片尚未合成）"
   },
   "gridSplit": {
     "connectImage": "请连接一张图以切分",
@@ -1460,6 +1980,10 @@
     "promptHelp": "提示词资产插入时会直接展开进提示词(文本+槽位标签),不以 {'@'} 标记形式存在。内容可引用槽位({'@'}image_N / {'@'}video_N / {'@'}audio_N),不允许引用其他条目。",
     "promptRefsError": "提示词资产不能引用其他条目——请移除:{tokens}"
   },
+  "promptUpstream": {
+    "connected": "已接入 {n} 段上游文本,运行时将拼接在提示词之后",
+    "pending": "(上游尚未运行)"
+  },
   "promptSave": {
     "open": "把当前提示词保存为可复用资产(条目 → Prompts)",
     "hint": "槽位引用({'@'}image_N …)会保留;不允许包含对其他条目的引用。",
@@ -1474,11 +1998,30 @@
     "searchPlaceholder": "搜索标签或内容…",
     "noMatch": "没有匹配的条目。"
   },
+  "collab": {
+    "editName": "修改显示名",
+    "you": "我",
+    "offline": "协作连接中…",
+    "alone": "还没有其他人在线。",
+    "stale": "未更新",
+    "badgeOnline": "{count} 人在线",
+    "badgeEditing": "共同编辑 · {count}",
+    "badgeTooltip": "ComfyTV 协作——详见 ComfyTV 侧边栏",
+    "toastTitle": "ComfyTV 协作",
+    "someoneStarted": "有人开启了本项目的共同编辑，可在 ComfyTV 侧边栏加入。",
+    "start": "开启共同编辑",
+    "joinEdit": "加入共同编辑",
+    "joinEditConfirm": "加入后本标签页的画布会被替换为共享的图，未保存的本地修改会丢失。继续？",
+    "coEditing": "共同编辑",
+    "liveSession": "共同编辑进行中",
+    "emptyCanvas": "共享画布上还没有 stage。"
+  },
   "menu": {
     "openEntryManager": "ComfyTV — 打开条目管理",
     "entriesTitle": "ComfyTV 条目",
     "entriesButtonTooltip": "ComfyTV — 条目(片段 / 角色 / …)",
-    "configSidebarTooltip": "ComfyTV — 工作流配置与素材库"
+    "configSidebarTooltip": "ComfyTV — 工作流配置与素材库",
+    "botSidebarTooltip": "ComfyTV Bot——能直接操作画布的聊天代理"
   },
   "valuePreview": {
     "moreShots": "+ 还有 {n} 个",
@@ -1515,7 +2058,21 @@
     "unlink": "解除",
     "unlinking": "解除中…",
     "unlinkedToast": "已解除「{label}」",
-    "unlinkFailed": "解除链接失败"
+    "unlinkFailed": "解除链接失败",
+    "sourceLabel": "来源",
+    "sourceLocal": "本机",
+    "introRemote": "浏览远端机器的 ComfyUI 工作流库。拉取会把原始 graph 格式的工作流复制进本地 ComfyTV 工作流库——在这里配置好绑定后，就可以在任意服务器上运行。",
+    "pull": "拉取",
+    "pulling": "拉取中…",
+    "repull": "重新拉取",
+    "pulledBadge": "已拉取",
+    "pulledToast": "已拉取「{label}」",
+    "pullFailed": "拉取失败"
+  },
+  "openInComfy": {
+    "open": "在 ComfyUI 中打开",
+    "tooltip": "在新的 ComfyUI 标签页中打开该工作流",
+    "failed": "在 ComfyUI 中打开失败：{detail}"
   },
   "scene3d": {
     "undo": "撤销",
@@ -1560,6 +2117,27 @@
     "freeCamera": "自由相机",
     "playPause": "播放 / 暂停",
     "timelineLoop": "循环播放",
+    "shotsTrack": "镜头轨",
+    "addShot": "镜头",
+    "shotCamera": "相机",
+    "shotLock": "锁定目标",
+    "shotLockNone": "无（自由）",
+    "shotDuration": "帧数",
+    "shotMoveUp": "前移",
+    "shotMoveDown": "后移",
+    "addPath": "添加路径",
+    "addPathHint": "铺一条行走路径，在视口中拖拽锚点调整形状",
+    "removePath": "移除路径",
+    "addPrompt": "提示词",
+    "promptEmpty": "（空）",
+    "promptStart": "起始帧",
+    "promptEnd": "结束帧",
+    "promptPlaceholder": "该帧区间的提示词（供下游生成使用）",
+    "autoPrompts": "自动生成",
+    "autoPromptsHint": "按每个镜头的机位几何自动生成电影语汇提示词（景别/角度/焦段/运镜）",
+    "planView": "俯视布局",
+    "floorOnly": "仅地面",
+    "tintColor": "染色",
     "presetFovScale": "视场缩放",
     "presetPathScale": "路径缩放",
     "presetYaw": "偏航",
@@ -1574,7 +2152,8 @@
       "color": "图像",
       "depth": "深度",
       "normal": "法线",
-      "openpose": "OpenPose"
+      "openpose": "OpenPose",
+      "id": "ID 遮罩"
     },
     "fps": "帧率",
     "frameCount": "帧数",
@@ -2181,5 +2760,62 @@
     "capture": "截取",
     "captureHint": "上传合成图 + 每个可见图层一张",
     "saveToLibraryHint": "把分层 PSD 存入资产库"
+  },
+  "appMode": {
+    "hint": "此工作流包含 ComfyTV stage，它们只在 Graph 视图下显示，App Mode 里什么都看不到。",
+    "back": "返回工作流"
+  },
+  "bot": {
+    "title": "ComfyTV Bot",
+    "newChat": "新对话",
+    "backToList": "全部对话",
+    "untitled": "新对话",
+    "noChats": "还没有对话。Bot 可以通过 ComfyTV 工具直接操作画布。",
+    "startFirst": "开始对话",
+    "emptyChat": "随便聊聊——Bot 能读取并编辑画布。",
+    "inputPlaceholder": "给 Bot 发消息…(Enter 发送,Shift+Enter 换行)",
+    "send": "发送",
+    "stop": "停止",
+    "thinking": "工作中…",
+    "aborted": "已停止。",
+    "turnError": "本轮出错了,详情见服务器日志。",
+    "toolResult": "工具结果",
+    "activitySteps": "过程 · {n} 次工具调用",
+    "noToolCalls": "0 次工具调用 — 本轮没有动过画布",
+    "rename": "重命名",
+    "pin": "置顶",
+    "unpin": "取消置顶",
+    "delete": "删除",
+    "deleteConfirm": "删除对话「{title}」?此操作不可撤销。",
+    "multiSelect": "多选",
+    "selectAll": "全选",
+    "selectedCount": "已选 {count} 个对话",
+    "deleteSelected": "删除所选",
+    "cancelSelect": "退出多选",
+    "batchDeleteConfirm": "删除所选的 {count} 个对话?此操作不可撤销。",
+    "noProviderTitle": "未检测到本地 agent CLI",
+    "noProviderBody": "ComfyTV Bot 通过本机安装的 agent CLI(Claude Code)驱动画布。安装并登录一次即可,全程不存任何 API key。",
+    "recheck": "重新检测",
+    "attachImage": "添加媒体文件",
+    "removeAttachment": "移除",
+    "dropHint": "拖入图片 / 视频 / 音频作为附件",
+    "attachFromLibrary": "从资产库选择",
+    "newChatWith": "选择对话引擎:",
+    "removeSkill": "移除技能",
+    "noResult": "(无结果)",
+    "copyCode": "复制代码",
+    "runModeAuto": "自动",
+    "runModeAsk": "询问",
+    "runModeHint": "自动模式立即执行;询问模式每次运行前先经你批准",
+    "askSubmit": "提交",
+    "askOtherPlaceholder": "或用自己的话回答…",
+    "askExpired": "超时未回答",
+    "askCancelled": "已取消",
+    "insertFromCanvas": "引用画布上选中的 stage",
+    "removeRef": "移除引用",
+    "branch": "分支",
+    "branchFrom": "从这条回复分支出新对话继续",
+    "queue": "排队",
+    "queuedHint": "已排队 — 当前轮结束后自动发送"
   }
 }

@@ -16,7 +16,7 @@ from ..db import (
 logger = logging.getLogger(__name__)
 
 
-ASSET_MEDIA_TYPES: tuple[str, ...] = ("image", "video", "audio", "model")
+ASSET_MEDIA_TYPES: tuple[str, ...] = ("image", "video", "audio", "model", "text")
 
 
 def _asset_category_to_dict(c: AssetCategory) -> dict:
@@ -211,6 +211,14 @@ def create_asset(
         return _asset_to_dict(asset, sorted(valid))
 
 
+def get_asset(asset_id: int) -> Optional[dict]:
+    with db.get_session() as s:
+        asset = s.get(Asset, asset_id)
+        if asset is None:
+            return None
+        return _asset_dict_for(s, asset)
+
+
 def update_asset(
     asset_id: int,
     *,
@@ -281,3 +289,17 @@ def asset_payload_urls() -> set:
     with db.get_session() as s:
         rows = s.execute(select(Asset.payload_url)).scalars().all()
         return set(rows)
+
+
+def find_asset_by_payload_url(payload_url: str) -> Optional[dict]:
+    if not payload_url:
+        return None
+    with db.get_session() as s:
+        a = s.execute(
+            select(Asset).where(Asset.payload_url == payload_url)
+            .order_by(desc(Asset.id)).limit(1)
+        ).scalars().first()
+        if a is None:
+            return None
+        cmap = _category_map(s, [a.id])
+        return _asset_to_dict(a, cmap.get(a.id, []))

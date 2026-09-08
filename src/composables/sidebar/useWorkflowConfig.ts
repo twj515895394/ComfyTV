@@ -2,6 +2,7 @@ import { ref } from 'vue'
 
 import { apiFetch, apiSend, OkSchema, unlinkWorkflow, uploadApiSidecar, WorkflowConfigSchema } from '@/api'
 import { askConfirm } from '@/composables/dialog/useConfirmDialog'
+import { tryOpenWorkflowInComfy } from '@/composables/useOpenInComfy'
 import { invalidateWorkflowInfo } from '@/composables/stages/useWorkflowValidator'
 import { prepareWorkflow } from '@/composables/stages/useWorkflowPrep'
 import { removeOptionEverywhere } from '@/composables/stages/workflowCombo'
@@ -32,6 +33,8 @@ export function useWorkflowConfig(t: (key: string, args?: Record<string, unknown
 
   const unlinkBusy  = ref(false)
   const unlinkError = ref<string | null>(null)
+
+  const openInComfyBusy = ref(false)
 
   async function loadConfig(kind: string, label: string) {
     loadError.value = null
@@ -71,6 +74,16 @@ export function useWorkflowConfig(t: (key: string, args?: Record<string, unknown
       exportError.value = t('configSidebar.exportPresetFailed', { detail })
     } finally {
       exportBusy.value = false
+    }
+  }
+
+  async function onOpenInComfy() {
+    if (!config.value) return
+    openInComfyBusy.value = true
+    try {
+      await tryOpenWorkflowInComfy(config.value)
+    } finally {
+      openInComfyBusy.value = false
     }
   }
 
@@ -217,8 +230,10 @@ export function useWorkflowConfig(t: (key: string, args?: Record<string, unknown
     resetBusy,  resetError,
     uploadApiBusy, uploadApiError,
     unlinkBusy, unlinkError,
+    openInComfyBusy,
     loadConfig,
     onExportPreset,
+    onOpenInComfy,
     onResetToPreset,
     onUploadApiSidecar,
     onUnlink,

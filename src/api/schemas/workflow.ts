@@ -28,6 +28,21 @@ export type NativeWorkflow = z.infer<typeof NativeWorkflowSchema>
 export const ListNativeWorkflowsSchema = z.object({
   workflows: z.array(NativeWorkflowSchema),
 })
+export const RemoteNativeWorkflowSchema = NativeWorkflowSchema.extend({
+  pulled: z.boolean().optional(),
+  pulled_label: z.string().nullable().optional(),
+})
+export type RemoteNativeWorkflow = z.infer<typeof RemoteNativeWorkflowSchema>
+export const ListRemoteNativeWorkflowsSchema = z.object({
+  workflows: z.array(RemoteNativeWorkflowSchema),
+})
+export const PullWorkflowResultSchema = z.object({
+  ok: z.boolean(),
+  kind: z.string(),
+  label: z.string(),
+  file_path: z.string().optional(),
+})
+export type PullWorkflowResult = z.infer<typeof PullWorkflowResultSchema>
 export const LinkWorkflowResultSchema = z.object({
   ok: z.boolean(),
   kind: z.string(),
@@ -56,6 +71,7 @@ export const WorkflowOverviewSchema = z.object({
   has_api: z.boolean(),
   gui_valid: z.boolean().nullable().optional(),
   is_default: z.boolean().optional(),
+  is_hidden: z.boolean().optional(),
 })
 export type WorkflowOverview = z.infer<typeof WorkflowOverviewSchema>
 export const SetDefaultWorkflowResultSchema = z.object({
@@ -65,6 +81,13 @@ export const SetDefaultWorkflowResultSchema = z.object({
   is_default: z.boolean(),
 })
 export type SetDefaultWorkflowResult = z.infer<typeof SetDefaultWorkflowResultSchema>
+export const SetHiddenWorkflowResultSchema = z.object({
+  ok: z.boolean(),
+  kind: z.string(),
+  label: z.string(),
+  is_hidden: z.boolean(),
+})
+export type SetHiddenWorkflowResult = z.infer<typeof SetHiddenWorkflowResultSchema>
 export const WorkflowRefSchema = z.object({
   kind: z.string(),
   label: z.string(),
@@ -92,6 +115,12 @@ export const WorkflowStateSchema = z.object({
   file_exists: z.boolean(),
 })
 export type WorkflowState = z.infer<typeof WorkflowStateSchema>
+export const ConvertWorkflowResultSchema = z.object({
+  ok: z.boolean(),
+  node_count: z.number(),
+  file_mtime: z.number(),
+})
+export type ConvertWorkflowResult = z.infer<typeof ConvertWorkflowResultSchema>
 export const ExposedWidgetSchema = z.object({
   node_id: z.string(),
   node_title: z.string(),
@@ -118,6 +147,7 @@ export const WorkflowConfigSchema = z.object({
   kind: z.string(),
   label: z.string(),
   link_type: z.number().optional(),
+  file_path: z.string().optional(),
   file_exists: z.boolean().optional(),
   has_api: z.boolean(),
   description: z.string().nullable(),
@@ -134,6 +164,7 @@ const WorkflowUsageEntrySchema = z.object({
   requires: z.record(z.string(), z.boolean()),
   required_slots: z.record(z.string(), z.array(z.number())).optional(),
   max_inputs: z.record(z.string(), z.number().nullable()),
+  uses_computed: z.record(z.string(), z.boolean()).optional(),
 })
 export const WorkflowInfoSchema = z.record(
   z.string(),

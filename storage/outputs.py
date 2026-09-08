@@ -5,7 +5,7 @@ import re as _re
 import uuid
 from typing import Any, Optional
 
-from sqlalchemy import desc, select
+from sqlalchemy import desc, func, select
 
 from .. import db
 from ..db import (
@@ -32,6 +32,7 @@ def persist_output(
     parent_output_id: Optional[int] = None,
     picked_index: Optional[int] = None,
     duration_ms: Optional[int] = None,
+    stage_uid: Optional[str] = None,
 ) -> Optional[dict]:
     pid = (project_id or "").strip() or DEFAULT_PROJECT_ID
     if pid == DEFAULT_PROJECT_ID:
@@ -47,6 +48,7 @@ def persist_output(
             project_id=pid,
             stage_class=stage_class,
             stage_node_id=str(stage_node_id) if stage_node_id is not None else None,
+            stage_uid=str(stage_uid) if stage_uid else None,
             output_type=output_type,
             payload_url=payload_url or "",
             payload_json=json.dumps(payload_json) if payload_json is not None else None,
@@ -76,20 +78,51 @@ def persist_output(
                 Output.id.notin_(referenced_parents),
             ).delete(synchronize_session=False)
             s.commit()
-        return _output_to_dict(out)
+        row = _output_to_dict(out)
+    _warm_output_thumbs(payload_url, payload_json)
+    return row
 
 
-def list_outputs(project_id: str, stage_node_id: Optional[str] = None, limit: int = 50) -> list[dict]:
+def _warm_output_thumbs(payload_url: str, payload_json: Any) -> None:
+    urls = [payload_url]
+    if isinstance(payload_json, dict):
+        urls += [im.get("image_url") for im in payload_json.get("images") or [] if isinstance(im, dict)]
+    try:
+        from ..runners.thumbs import warm_thumbs
+        warm_thumbs(urls)
+    except Exception:
+        logger.debug("[ComfyTV] thumb warm-up skipped", exc_info=True)
+
+
+def list_outputs(
+    project_id: str,
+    stage_node_id: Optional[str] = None,
+    limit: int = 50,
+    *,
+    stage_class: Optional[str] = None,
+    orphans_only: bool = False,
+) -> list[dict]:
     with db.get_session() as s:
         q = select(Output).where(Output.project_id == project_id)
         if stage_node_id is not None:
             q = q.where(Output.stage_node_id == str(stage_node_id))
+        if stage_class:
+            q = q.where(Output.stage_class == str(stage_class))
+        if orphans_only:
+            q = q.where(Output.stage_uid.is_(None))
         q = q.order_by(desc(Output.id)).limit(limit)
         return [_output_to_dict(o) for o in s.execute(q).scalars().all()]
 
 
-def latest_output(project_id: str, stage_node_id: str) -> Optional[dict]:
-    rows = list_outputs(project_id, stage_node_id=stage_node_id, limit=1)
+def latest_output(
+    project_id: str,
+    stage_node_id: str,
+    *,
+    stage_class: Optional[str] = None,
+    orphans_only: bool = False,
+) -> Optional[dict]:
+    rows = list_outputs(project_id, stage_node_id=stage_node_id, limit=1,
+                        stage_class=stage_class, orphans_only=orphans_only)
     return rows[0] if rows else None
 
 
@@ -110,6 +143,30 @@ def latest_output_by_uid(
         return _output_to_dict(out) if out is not None else None
 
 
+def latest_outputs_by_uids(
+    project_id: str, items: list[tuple[str, Optional[str]]]
+) -> list[Optional[dict]]:
+    uids = {str(uid) for uid, _ in items if uid}
+    if not uids:
+        return [None for _ in items]
+    with db.get_session() as s:
+        q = (
+            select(Output)
+            .where(Output.project_id == project_id, Output.stage_uid.in_(uids))
+            .order_by(desc(Output.id))
+        )
+        rows = s.execute(q).scalars().all()
+        found: dict[tuple[str, Optional[str]], dict] = {}
+        for o in rows:
+            for key in ((o.stage_uid, None), (o.stage_uid, o.output_type)):
+                if key not in found:
+                    found[key] = _output_to_dict(o)
+    return [
+        found.get((str(uid), str(otype) if otype else None)) if uid else None
+        for uid, otype in items
+    ]
+
+
 def set_output_stage_uid(output_id: int, stage_uid: str) -> Optional[dict]:
     if not stage_uid:
         return None
@@ -128,10 +185,17 @@ def adopt_outputs(
     stage_class: str,
     stage_uid: str,
     output_type: Optional[str] = None,
+    since: Any = None,
 ) -> Optional[dict]:
     if not stage_uid or not stage_node_id or not stage_class:
         return None
+    since_dt = parse_output_since(since)
     with db.get_session() as s:
+        if since_dt is None:
+            since_dt = s.query(func.min(Output.created_at)).filter(
+                Output.project_id == project_id,
+                Output.stage_uid == str(stage_uid),
+            ).scalar()
         q = s.query(Output).filter(
             Output.project_id == project_id,
             Output.stage_node_id == str(stage_node_id),
@@ -140,13 +204,48 @@ def adopt_outputs(
         )
         if output_type:
             q = q.filter(Output.output_type == str(output_type))
-        rows = q.order_by(desc(Output.id)).all()
-        if not rows:
+        if since_dt is not None:
+            q = q.filter(Output.created_at >= since_dt)
+        row = q.order_by(desc(Output.id)).first()
+        if row is None:
             return None
-        for r in rows:
-            r.stage_uid = str(stage_uid)
+        row.stage_uid = str(stage_uid)
         s.commit()
-        return _output_to_dict(rows[0])
+        return _output_to_dict(row)
+
+
+def parse_output_since(value: Any):
+    from datetime import datetime, timezone
+    if value is None or value == "":
+        return None
+    if isinstance(value, datetime):
+        dt = value
+    else:
+        try:
+            dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def find_output_by_payload_url(payload_url: str) -> Optional[dict]:
+    """Latest output whose payload is (or contains) this /view URL."""
+    if not payload_url:
+        return None
+    with db.get_session() as s:
+        q = (select(Output)
+             .where(Output.payload_url == payload_url)
+             .order_by(desc(Output.id)).limit(1))
+        out = s.execute(q).scalars().first()
+        if out is None:
+            needle = json.dumps(payload_url)[1:-1]
+            q = (select(Output)
+                 .where(Output.payload_json.contains(needle))
+                 .order_by(desc(Output.id)).limit(1))
+            out = s.execute(q).scalars().first()
+        return _output_to_dict(out) if out is not None else None
 
 
 def find_output_by_param(

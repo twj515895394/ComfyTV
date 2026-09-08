@@ -7,8 +7,10 @@ from .inputs import (
     _custom_params_input,
 )
 from .emit import _stage_emit_auto
+from .provenance import build_provenance, set_last_provenance
 from .timing import reset_invoke_duration, set_invoke_duration
 from ....runners import RUNNER_REGISTRY, RunnerContext
+from ....runners.exec_errors import record_exec_error
 
 
 class StageError(RuntimeError):
@@ -102,6 +104,36 @@ async def invoke_runner(
     option_defaults=None,
     progress=None,
 ):
+    try:
+        return await _invoke_runner(
+            kind=kind,
+            label=label,
+            main_prompt=main_prompt,
+            upstream=upstream,
+            options=options,
+            custom_params=custom_params,
+            option_defaults=option_defaults,
+            progress=progress,
+        )
+    except Exception as e:
+        set_last_provenance(None)
+        project_id = (options or {}).get('project_id')
+        record_exec_error(kind=kind, label=label, error=e,
+                          project_id=project_id if isinstance(project_id, str) else None)
+        raise
+
+
+async def _invoke_runner(
+    *,
+    kind: str,
+    label: str,
+    main_prompt=None,
+    upstream=None,
+    options=None,
+    custom_params=None,
+    option_defaults=None,
+    progress=None,
+):
     runner = RUNNER_REGISTRY.by_label(label, kind)
     if runner is None:
         raise StageRunnerMissing(
@@ -112,6 +144,8 @@ async def invoke_runner(
 
     merged_options = _merge_custom_params(kind, custom_params, options, option_defaults)
     runner = _route_server(runner, merged_options.pop('__server', None))
+    set_last_provenance(build_provenance(
+        label=label, main_prompt=main_prompt, options=merged_options))
 
     ctx_kwargs: dict = {
         'kind': kind,

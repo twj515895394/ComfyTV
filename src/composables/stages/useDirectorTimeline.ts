@@ -36,9 +36,14 @@ export interface DirectorClipStatus {
 }
 
 export const PPS = 14
-export const CLIP_MIN_W = 64
+export const CLIP_MIN_W = 20
+export const CLIP_GAP_PX = 4
 export const DURATION_MIN_S = 1
 export const DURATION_MAX_S = 120
+
+export function clipWidthPxOf(c: DirectorClip): number {
+  return Math.max(CLIP_MIN_W, c.duration_s * PPS)
+}
 
 function newId(): string {
   return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
@@ -122,8 +127,9 @@ export function useDirectorTimeline(
   const drag = ref<{
     id: string
     previewX: number
-    grabDx: number
+    baseX: number
     startX: number
+    scale: number
     active: boolean
   } | null>(null)
 
@@ -142,12 +148,12 @@ export function useDirectorTimeline(
   })
 
   function clipWidthPx(c: DirectorClip): number {
-    return Math.max(CLIP_MIN_W, c.duration_s * PPS)
+    return clipWidthPxOf(c)
   }
 
   function startPxOf(idx: number): number {
     let x = 0
-    for (let i = 0; i < idx; i++) x += clipWidthPx(clips.value[i]) + 4
+    for (let i = 0; i < idx; i++) x += clipWidthPx(clips.value[i]) + CLIP_GAP_PX
     return x
   }
 
@@ -161,7 +167,7 @@ export function useDirectorTimeline(
   }
 
   const trackWidthPx = computed(() =>
-    clips.value.reduce((sum, c) => sum + clipWidthPx(c) + 4, 0) + 40,
+    clips.value.reduce((sum, c) => sum + clipWidthPx(c) + CLIP_GAP_PX, 0) + 40,
   )
 
   function commit() {
@@ -281,14 +287,22 @@ export function useDirectorTimeline(
 
   const DRAG_THRESHOLD_PX = 5
 
+  function overlayScale(): number {
+    const el = rootEl.value
+    if (!el) return 1
+    const w = el.getBoundingClientRect().width
+    return el.offsetWidth > 0 && w > 0 ? w / el.offsetWidth : 1
+  }
+
   function onClipPointerDown(e: PointerEvent, clip: DirectorClip, idx: number) {
     selectedId.value = clip.id
     const base = startPxOf(idx)
     drag.value = {
       id: clip.id,
       previewX: base,
-      grabDx: e.clientX - base,
+      baseX: base,
       startX: e.clientX,
+      scale: overlayScale(),
       active: false,
     }
     beginPointerDrag(e, onClipPointerMove, () => {
@@ -302,10 +316,10 @@ export function useDirectorTimeline(
     const d = drag.value
     if (!d) return
     if (!d.active) {
-      if (Math.abs(e.clientX - d.startX) < DRAG_THRESHOLD_PX) return
+      if (Math.abs(e.clientX - d.startX) < DRAG_THRESHOLD_PX * d.scale) return
       d.active = true
     }
-    const px = e.clientX - d.grabDx
+    const px = d.baseX + (e.clientX - d.startX) / d.scale
     d.previewX = px
     const draggedIdx = clips.value.findIndex(c => c.id === d.id)
     if (draggedIdx < 0) return
@@ -318,7 +332,7 @@ export function useDirectorTimeline(
     for (let j = 0; j < others.length; j++) {
       const mid = acc + clipWidthPx(others[j]) / 2
       if (centerX < mid) { targetIdx = j; break }
-      acc += clipWidthPx(others[j]) + 4
+      acc += clipWidthPx(others[j]) + CLIP_GAP_PX
     }
     if (targetIdx !== draggedIdx) {
       clips.value.splice(draggedIdx, 1)
@@ -326,19 +340,162 @@ export function useDirectorTimeline(
     }
   }
 
-  let resizeState: { id: string; startX: number; startDur: number } | null = null
+  let resizeState: {
+    id: string
+    startX: number
+    startDur: number
+    scale: number
+  } | null = null
   function onResizePointerDown(e: PointerEvent, clip: DirectorClip) {
     selectedId.value = clip.id
-    resizeState = { id: clip.id, startX: e.clientX, startDur: clip.duration_s }
+    resizeState = {
+      id: clip.id,
+      startX: e.clientX,
+      startDur: clip.duration_s,
+      scale: overlayScale(),
+    }
     beginPointerDrag(e, onResizeMove, () => { resizeState = null; commit() })
   }
   function onResizeMove(e: PointerEvent) {
     if (!resizeState) return
     const c = clips.value.find(x => x.id === resizeState!.id)
     if (!c) return
-    const ds = Math.round((e.clientX - resizeState.startX) / PPS)
+    const ds = Math.round((e.clientX - resizeState.startX) / (PPS * resizeState.scale))
     c.duration_s = Math.max(DURATION_MIN_S, Math.min(DURATION_MAX_S,
       resizeState.startDur + ds))
+  }
+
+  function mcpFindClip(id: unknown): DirectorClip {
+    const c = clips.value.find(x => x.id === String(id ?? ''))
+    if (!c) {
+      const ids = clips.value.map(x => x.id).join(', ') || 'none'
+      throw new Error(`clip ${String(id)} not found (ids: ${ids})`)
+    }
+    return c
+  }
+
+  function mcpClipPatch(op: any): Partial<DirectorClip> {
+    const patch: Partial<DirectorClip> = {}
+    if (op.enabled != null) patch.enabled = op.enabled !== false
+    if (op.workflow != null) patch.workflow = String(op.workflow)
+    if (op.prompt != null) patch.prompt = String(op.prompt)
+    if (op.duration_s != null) {
+      const d = Number(op.duration_s)
+      if (!Number.isFinite(d)) throw new Error('duration_s must be a number')
+      patch.duration_s = d
+    }
+    if (op.seed != null) {
+      const s = Number(op.seed)
+      if (!Number.isFinite(s)) throw new Error('seed must be a number')
+      patch.seed = s
+    }
+    if (op.transition != null) {
+      if (!TRANSITIONS.includes(String(op.transition))) {
+        throw new Error(
+          `unknown transition '${op.transition}' — valid: ${TRANSITIONS.join(', ')}`)
+      }
+      patch.transition = String(op.transition)
+    }
+    if (op.transition_s != null) {
+      const t = Number(op.transition_s)
+      if (!Number.isFinite(t)) throw new Error('transition_s must be a number')
+      patch.transition_s = Math.max(0.1, Math.min(5, t))
+    }
+    for (const kind of ['images', 'videos', 'audio'] as const) {
+      if (op[kind] != null) {
+        if (!Array.isArray(op[kind])) {
+          throw new Error(`${kind} must be an array of /view?… media URLs`)
+        }
+        patch[kind] = toUrlList(op[kind])
+      }
+    }
+    return patch
+  }
+
+  function mcpApplyOps(ops: any[]): Array<Record<string, unknown>> {
+    if (state.running) {
+      throw new Error('director is running — wait_stage or cancel_stage first')
+    }
+    if (!Array.isArray(ops) || ops.length === 0) {
+      throw new Error('ops must be a non-empty array of {op, ...} objects')
+    }
+    const results: Array<Record<string, unknown>> = []
+    ops.forEach((op, i) => {
+      const where = `ops[${i}]`
+      try {
+        switch (op?.op) {
+          case 'add_clip': {
+            const clip = normalizeClip({ ...mcpClipPatch(op), seed: op.seed })
+            const idx = op.index != null
+              ? Math.max(0, Math.min(clips.value.length, Number(op.index)))
+              : clips.value.length
+            clips.value.splice(idx, 0, clip)
+            selectedId.value = clip.id
+            commit()
+            results.push({ op: 'add_clip', id: clip.id, index: idx })
+            break
+          }
+          case 'update_clip': {
+            const c = mcpFindClip(op.id)
+            updateClip(c.id, mcpClipPatch(op))
+            results.push({ op: 'update_clip', id: c.id })
+            break
+          }
+          case 'remove_clip': {
+            const c = mcpFindClip(op.id)
+            removeClip(c.id)
+            results.push({ op: 'remove_clip', id: c.id })
+            break
+          }
+          case 'duplicate_clip': {
+            const c = mcpFindClip(op.id)
+            duplicateClip(c.id)
+            results.push({ op: 'duplicate_clip', id: selectedId.value })
+            break
+          }
+          case 'move_clip': {
+            const c = mcpFindClip(op.id)
+            if (op.index == null) throw new Error('move_clip needs index')
+            const from = clips.value.findIndex(x => x.id === c.id)
+            const to = Math.max(0, Math.min(clips.value.length - 1, Number(op.index)))
+            clips.value.splice(from, 1)
+            clips.value.splice(to, 0, c)
+            commit()
+            results.push({ op: 'move_clip', id: c.id, index: to })
+            break
+          }
+          case 'reroll': {
+            if (op.id != null) {
+              const c = mcpFindClip(op.id)
+              rerollSeed(c.id)
+              results.push({ op: 'reroll', id: c.id })
+            } else {
+              rerollAllSeeds()
+              results.push({ op: 'reroll', all: true })
+            }
+            break
+          }
+          case 'set_chain': {
+            if (!CHAIN_MODES.includes(op.chain)) {
+              throw new Error(
+                `unknown chain '${op.chain}' — valid: ${CHAIN_MODES.join(', ')}`)
+            }
+            setChainMode(op.chain)
+            results.push({ op: 'set_chain', chain: op.chain })
+            break
+          }
+          default:
+            throw new Error(
+              `unknown op '${op?.op}'; valid ops: add_clip, update_clip, `
+              + 'remove_clip, duplicate_clip, move_clip, reroll, set_chain')
+        }
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error)
+        throw new Error(
+          `${where}: ${detail} (ops before this one were already applied)`)
+      }
+    })
+    return results
   }
 
   restore()
@@ -347,6 +504,24 @@ export function useDirectorTimeline(
     node.onConfigure = function (info: any) {
       origOnConfigure?.call(this, info)
       restore()
+    }
+    const hostApi = ((node as any).__comfytvStageApi ??= {})
+    hostApi.director = {
+      getState: () => JSON.parse(JSON.stringify({
+        settings: settings.value,
+        total_seconds: totalSeconds.value,
+        default_workflow: readWidgetStr(node, 'workflow', ''),
+        running: state.running === true,
+        clips: clips.value.map((c, i) => ({
+          ...c,
+          index: i,
+          status: statuses.value.get(c.id) ?? null,
+        })),
+        workflow_options: workflowOptions.value,
+        transitions: TRANSITIONS,
+        chain_modes: CHAIN_MODES,
+      })),
+      applyOps: async (ops: any[]) => ({ results: mcpApplyOps(ops) }),
     }
   }
 

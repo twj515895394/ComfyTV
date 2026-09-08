@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 
@@ -6,7 +7,8 @@ from aiohttp import web
 from ..runners import (
     workflow_db, refresh_registry, seed_workflows, last_scan_added, WORKFLOW_KINDS,
 )
-from ._common import routes
+from ..runners.vendor.workflow_to_api import WorkflowConversionError
+from ._common import routes, broadcast_workflow_event
 
 
 @routes.get("/comfytv/workflows")
@@ -25,6 +27,8 @@ async def workflow_list_overview(request: web.Request) -> web.Response:
 @routes.post("/comfytv/workflows/rescan")
 async def workflow_rescan(_request: web.Request) -> web.Response:
     result = seed_workflows()
+    if result.get("added"):
+        broadcast_workflow_event("rescan", {"added": result["added"]})
     return web.json_response({"ok": True, **result})
 
 
@@ -137,6 +141,7 @@ async def workflow_import(request: web.Request) -> web.Response:
         return web.json_response({"error": f"could not write workflow file: {e}"}, status=500)
 
     refresh_registry()
+    broadcast_workflow_event("import", {"kind": kind, "label": result.get("label")})
     return web.json_response({"ok": True, **result})
 
 
@@ -171,6 +176,7 @@ async def workflow_link(request: web.Request) -> web.Response:
         return web.json_response({"error": str(e)}, status=400)
 
     refresh_registry()
+    broadcast_workflow_event("import", {"kind": kind, "label": result.get("label")})
     return web.json_response({"ok": True, **result})
 
 
@@ -187,6 +193,30 @@ async def workflow_set_default(request: web.Request) -> web.Response:
     result = workflow_db.set_default_workflow(wid, bool(body.get("default", True)))
     if result is None:
         return web.json_response({"error": "workflow not found"}, status=404)
+    broadcast_workflow_event("default", {
+        "kind": result["kind"], "label": result["label"],
+        "default": bool(result.get("is_default"))})
+    return web.json_response(result)
+
+
+@routes.post("/comfytv/workflows/{wid}/set_hidden")
+async def workflow_set_hidden(request: web.Request) -> web.Response:
+    try:
+        wid = int(request.match_info["wid"])
+    except (KeyError, ValueError):
+        return web.json_response({"error": "invalid workflow id"}, status=400)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    result = workflow_db.set_hidden_workflow(wid, bool(body.get("hidden", True)))
+    if result is None:
+        return web.json_response({"error": "workflow not found"}, status=404)
+
+    refresh_registry()
+    broadcast_workflow_event("hidden", {
+        "kind": result["kind"], "label": result["label"],
+        "hidden": bool(result.get("is_hidden"))})
     return web.json_response(result)
 
 
@@ -204,6 +234,8 @@ async def workflow_unlink(request: web.Request) -> web.Response:
         return web.json_response({"error": "workflow not found"}, status=404)
 
     refresh_registry()
+    broadcast_workflow_event("unlink", {
+        "kind": result.get("kind"), "label": result.get("label")})
     return web.json_response(result)
 
 
@@ -273,6 +305,30 @@ async def workflow_update_meta(request: web.Request) -> web.Response:
     if not ok:
         return web.json_response({"error": "workflow not found"}, status=404)
     return web.json_response({"ok": True})
+
+
+@routes.post("/comfytv/workflows/convert")
+async def workflow_convert(request: web.Request) -> web.Response:
+    try:
+        body = await request.json()
+    except Exception:
+        return web.json_response({"error": "json body required"}, status=400)
+
+    kind = str(body.get("kind") or "")
+    label = str(body.get("label") or "")
+    if not kind or not label:
+        return web.json_response({"error": "kind and label required"}, status=400)
+
+    loop = asyncio.get_running_loop()
+    try:
+        result = await loop.run_in_executor(
+            None, workflow_db.convert_workflow, kind, label
+        )
+    except FileNotFoundError as e:
+        return web.json_response({"error": str(e)}, status=404)
+    except WorkflowConversionError as e:
+        return web.json_response({"error": str(e)}, status=422)
+    return web.json_response({"ok": True, **result})
 
 
 @routes.post("/comfytv/workflows/api_json")

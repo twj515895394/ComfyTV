@@ -1,3 +1,13 @@
+PENDING_STAGES: frozenset[str] = frozenset({
+    'AudioExtractBgStage', 'AudioExtractVocalStage',
+    'DirectorTimelineStage', 'TimelineVideoStage',
+    'ShotImagesStage', 'StoryboardStage',
+    'VideoSubtitleSelectEraseStage', 'VideoSubtitleSmartEraseStage',
+    'VideoUpscaleStage',
+})
+
+NON_STAGE_NODES: frozenset[str] = frozenset({'MaskCleanup', 'MakeProxyStage'})
+
 STAGE_META: dict[str, dict] = {
     'ProjectStage':                 {'kind': 'project'},
     'TextStage':                    {'kind': 'text',         'workflow_kind': 'text'},
@@ -31,7 +41,8 @@ STAGE_META: dict[str, dict] = {
     'GridSplitStage':               {'kind': 'image-batch', 'variant': 'transform'},
     'DirectorTimelineStage':        {'kind': 'timeline',    'variant': 'transform'},
     'TimelineVideoStage':           {'kind': 'video',        'workflow_kind': 'timeline'},
-    'ImageVariationsStage':         {'kind': 'image-batch',  'workflow_kind': 'multiview'},
+    'ImageVariationsStage':         {'kind': 'image-batch',  'workflow_kind': 'multiview',
+                                     'workflow_kinds': ['multiview', 'sequence']},
     'RelightStage':                 {'kind': 'image',       'variant': 'loader'},
     'MultiangleStage':              {'kind': 'image',        'workflow_kind': 'multiangle'},
     'VideoExtractFrameStage':       {'kind': 'image'},
@@ -82,6 +93,8 @@ STAGE_META: dict[str, dict] = {
     'AudioVisualizeStage':          {'kind': 'image'},
     'AudioMixStage':                {'kind': 'audio'},
     'AudioSegmentExportStage':      {'kind': 'text'},
+    'AudioClipStage':               {'kind': 'audio'},
+    'AudioSplitStage':              {'kind': 'audio'},
     'AudioConvolveStage':           {'kind': 'audio'},
     'AudioSweepStage':              {'kind': 'audio'},
     'AudioDeconvolveStage':         {'kind': 'audio'},
@@ -171,6 +184,7 @@ STAGE_META: dict[str, dict] = {
     'AssetImageLoaderStage':        {'kind': 'image',       'variant': 'loader'},
     'AssetVideoLoaderStage':        {'kind': 'video',       'variant': 'loader'},
     'AssetAudioLoaderStage':        {'kind': 'audio',       'variant': 'loader'},
+    'AssetTextLoaderStage':         {'kind': 'text',        'variant': 'loader'},
     'Scene3DStage':                 {'kind': 'image',       'variant': 'loader'},
     'LayerEditorStage':             {'kind': 'image',       'variant': 'loader'},
     'StoryboardEditorStage':        {'kind': 'image',       'variant': 'loader'},
@@ -184,6 +198,9 @@ STAGE_META: dict[str, dict] = {
     'MeshBooleanStage':             {'kind': 'model'},
     'LineArtStage':                 {'kind': 'image'},
     'PosterStage':                  {'kind': 'image'},
+    'BlenderSceneStage':            {'kind': 'image',       'variant': 'loader'},
+    'BlenderCameraStage':           {'kind': 'image'},
+    'BlenderAnimationStage':        {'kind': 'video'},
 }
 
 
